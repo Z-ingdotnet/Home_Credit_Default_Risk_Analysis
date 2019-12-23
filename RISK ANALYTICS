@@ -1,0 +1,118 @@
+#library(bannerCommenter)
+#banner("Title:", "R code","Author: Iverson ZHOU","Date: 2019-12-23","Version 1","Topic: Risk Analytics with R on Bank Data (initial exploration)"
+#       ,"Dataset: Bank Home Credit Data", emph = TRUE)
+
+############################################################################
+############################################################################
+###                                                                      ###
+###                                TITLE:                                ###
+###                                R CODE                                ###
+###                         AUTHOR: IVERSON ZHOU                         ###
+###                           DATE: 2019-12-23                           ###
+###                              VERSION 1                               ###
+###   TOPIC: RISK ANALYTICS WITH R on BANK DATA (INITIAL EXPLORATION)    ###
+###                    DATASET: BANK HOME CREDIT DATA                    ###
+###                                                                      ###
+############################################################################
+############################################################################
+
+#set work dir
+mem_used()
+getwd()
+setwd("X:/Users/119987/HC/")
+
+list.files(path = "./", pattern = NULL, all.files = FALSE,
+           full.names = FALSE, recursive = FALSE,
+           ignore.case = FALSE, include.dirs = FALSE, no.. = FALSE)
+
+.libPaths()
+.libPaths("C:/Program Files/R/R-3.6.1/library")
+
+#library
+Packages <- c("readr","pryr","RODBC","dplyr","dbplyr","lubridate","ggplot2","ggvis","sqldf","tidyr","cluster","fpc","fastR","graphics","pracma","NbClust","randomForest","ggplot2","NbClust","h2o","caret","dbscan","gmm","TDA","flexclust","skmeans","akmeans","ElemStatLearn"
+				,"mltools")
+lapply(Packages, library, character.only = TRUE)
+
+
+
+# import data
+application_train <- read_csv("./application_train.csv")
+head(application_train,10)
+
+application_test = read_csv("./application_test.csv")
+head(application_test,10)
+
+
+
+#bureau <- read_csv("./bureau.csv")
+#bureau_balance <- read_csv("./bureau_balance.csv")
+#credit_card_balance <- read_csv("./credit_card_balance.csv")
+#HomeCredit_columns_description <- read_csv("./HomeCredit_columns_description.csv")
+#installments_payments <- read_csv("./installments_payments.csv")
+#POS_CASH_balance <- read_csv("./POS_CASH_balance.csv")
+#previous_application <- read_csv("./previous_application.csv")
+
+#save.image("X:/Users/119987/R_HC.RData")
+
+#create a backup
+#application_train_bk<- application_train
+#application_test_bk<- application_test
+
+names(application_train)
+
+str(application_train)
+hist(application_train$TARGET)
+table(application_train[,c(2)]) #an imbalanced class problem
+
+
+#examine missing values by columns
+sapply(data.frame(application_train), function(x) sum(is.na (x)))
+
+
+#percentage of total
+options(scipen = 999)
+sapply(data.frame(application_train), function(x) (100*sum(is.na (x)))/length(x))
+
+str(application_train)
+sapply(data.frame(application_train), function(x) is.factor(x))
+
+
+
+#categorical variables encoding processs
+
+##st_count=1
+##for (f in st_count :length(names(application_train))) {
+##  
+##  if (
+##         (class(application_train[[f]]) == 'character') 
+##        )  {
+##        
+##        levels <- sort(unique(c(application_train[[f]], application_test[[f]])))
+##        application_train[[f]] <- as.integer(factor(application_train[[f]], levels = levels))
+##        application_test[[f]] <- as.integer(factor(application_test[[f]], levels = levels))
+##      }
+##}
+
+
+encoding_count=0
+#label encoding  (just found out there are packages that have butit in label encoding function e.g. caret)
+for (f in (names(application_train))) {
+
+  if (
+  		 #(class(application_train[[f]]) == 'character') 
+      (is.character(application_train[[f]])=='TRUE') &
+      ((length(unique(levels(as.factor(application_train[[f]]))))<=2))=='TRUE'
+        )  {
+        
+        levels <- sort(unique(c(application_train[[f]], application_test[[f]])))
+        application_train[[f]] <- as.integer(factor(application_train[[f]], levels = levels))
+        application_test[[f]] <- as.integer(factor(application_test[[f]], levels = levels))
+        encoding_count=encoding_count += 1
+      }
+}
+
+
+
+# one-hot encoding of categorical variables
+app_train = pd.get_dummies(app_train)
+app_test = pd.get_dummies(app_test)
