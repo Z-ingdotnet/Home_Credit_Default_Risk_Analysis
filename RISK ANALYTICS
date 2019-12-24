@@ -30,7 +30,7 @@ list.files(path = "./", pattern = NULL, all.files = FALSE,
 
 #library
 Packages <- c("readr","pryr","RODBC","dplyr","dbplyr","lubridate","ggplot2","ggvis","sqldf","tidyr","cluster","fpc","fastR","graphics","pracma","NbClust","randomForest","ggplot2","NbClust","h2o","caret","dbscan","gmm","TDA","flexclust","skmeans","akmeans","ElemStatLearn"
-				,"mltools")
+				,"mltools","vtreat")
 lapply(Packages, library, character.only = TRUE)
 
 
@@ -107,12 +107,87 @@ for (f in (names(application_train))) {
         levels <- sort(unique(c(application_train[[f]], application_test[[f]])))
         application_train[[f]] <- as.integer(factor(application_train[[f]], levels = levels))
         application_test[[f]] <- as.integer(factor(application_test[[f]], levels = levels))
-        encoding_count=encoding_count += 1
+        encoding_count=encoding_count +1
       }
 }
 
 
 
 # one-hot encoding of categorical variables
-app_train = pd.get_dummies(app_train)
-app_test = pd.get_dummies(app_test)
+#create treatment plan
+
+varnames_onehot=NULL
+for (f in (names(application_train))) {
+  
+  if (
+    #(class(application_train[[f]]) == 'character') 
+    (is.character(application_train[[f]])=='TRUE') &
+    ((length(unique(levels(as.factor(application_train[[f]]))))>2))=='TRUE'
+  )  {
+    
+    varnames_onehot=
+      paste(colnames(application_train[f])
+        #paste("\"",, "\"",sep="")
+            
+            ,varnames_onehot,sep = ",")
+      
+  		}
+}
+varnames_onehot
+
+# only want to create the catP variables
+
+#vartypes <- c(#'clean', 'isBAD', 'poolN', 
+#				'catN')
+
+#treatplan <- designTreatmentsZ(application_train
+#                               ,c('WALLSMATERIAL_MODE','HOUSETYPE_MODE','FONDKAPREMONT_MODE','ORGANIZATION_TYPE','WEEKDAY_APPR_PROCESS_START','OCCUPATION_TYPE','NAME_HOUSING_TYPE','NAME_FAMILY_STATUS','NAME_EDUCATION_TYPE','NAME_INCOME_TYPE','NAME_TYPE_SUITE','CODE_GENDER')
+#                               #,codeRestriction = vartypes
+#)
+
+##treatplan <- designTreatmentsN(application_train, 
+##                               varlist = c('WALLSMATERIAL_MODE','HOUSETYPE_MODE','FONDKAPREMONT_MODE','ORGANIZATION_TYPE','WEEKDAY_APPR_PROCESS_START','OCCUPATION_TYPE','NAME_HOUSING_TYPE','NAME_FAMILY_STATUS','NAME_EDUCATION_TYPE','NAME_INCOME_TYPE','NAME_TYPE_SUITE','CODE_GENDER'), 
+##                               #outcomename = 'activity',
+##                               codeRestriction = vartypes,
+##                               customCoders = customCoders, 
+##                               verbose=FALSE)
+
+#scoreFrame <- treatplan %>% 
+#  magrittr::use_series(scoreFrame) %>% 
+#  select(varName, origName, code)
+
+
+#scoreFrame2 = treatplan$scoreFrame
+#scoreFrame2 %>% select(varName, sig, origName, code)
+#newvarlist <- scoreFrame %>% 
+#  filter(code %in% c("catP" #,"clean", "lev"
+#  )) %>%
+#    magrittr::use_series(varName)
+
+#data.treat <- prepare(treatplan, data, varRestrictions = newvarlist)
+
+
+
+for (f in (names(application_train))) {
+  
+  if (
+    #(class(application_train[[f]]) == 'character') 
+    (is.character(application_train[[f]])=='TRUE') &
+    ((length(unique(levels(as.factor(application_train[[f]]))))>2))=='TRUE'
+  )
+    for(unique_value in unique(levels(as.factor(application_train[[f]])))){
+      application_train[paste(colnames(application_train[f]), unique_value, sep = ".")] <- ifelse(application_train$f == unique_value, 1, 0)
+    }
+  
+}
+
+
+# to do
+#algin training and testing data strcuture 
+
+
+
+
+#Anomalies detection
+summary(application_train['DAYS_EMPLOYED'])
+hist(application_train$DAYS_EMPLOYED)
