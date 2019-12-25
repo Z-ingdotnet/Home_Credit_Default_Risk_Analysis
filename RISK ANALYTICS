@@ -30,7 +30,7 @@ list.files(path = "./", pattern = NULL, all.files = FALSE,
 
 #library
 Packages <- c("readr","pryr","RODBC","dplyr","dbplyr","lubridate","ggplot2","ggvis","sqldf","tidyr","cluster","fpc","fastR","graphics","pracma","NbClust","randomForest","ggplot2","NbClust","h2o","caret","dbscan","gmm","TDA","flexclust","skmeans","akmeans","ElemStatLearn"
-				,"mltools","vtreat")
+				,"mltools","vtreat","ggcorrplot")
 lapply(Packages, library, character.only = TRUE)
 
 
@@ -191,3 +191,85 @@ for (f in (names(application_train))) {
 #Anomalies detection
 summary(application_train['DAYS_EMPLOYED'])
 hist(application_train$DAYS_EMPLOYED)
+
+
+Anomalies<-application_train%>% 
+  filter(DAYS_EMPLOYED>=300000)
+  
+NonAnomalies<-application_train%>% 
+  filter(DAYS_EMPLOYED<300000)
+
+#The non-anomalies default of loans% 
+mean(NonAnomalies[['TARGET']])
+
+#The anomalies default of loans% 
+mean(Anomalies[['TARGET']])
+
+#anomalous days of employment
+length(Anomalies$TARGET)
+
+
+
+
+# Create an anomalous flag column
+application_train['DAYS_EMPLOYED_ANOM'] <- application_train["DAYS_EMPLOYED"] >=300000
+
+# Replace the anomalous values with na
+application_train$DAYS_EMPLOYED[application_train$DAYS_EMPLOYED== 365243] <- NA
+
+hist(application_train$DAYS_EMPLOYED,main = 'Days Employment Histogram', xlab='Days Employment')
+
+
+#apply same with test data
+application_test['DAYS_EMPLOYED_ANOM'] <- application_test["DAYS_EMPLOYED"] >=300000
+
+application_test$DAYS_EMPLOYED[application_test$DAYS_EMPLOYED>=300000] <- NA
+
+
+#process
+#treat categorical encoding, missing values and the outliers
+r=cor(application_train$TARGET,application_train[sapply(application_train, function(x) is.numeric(x))], use="pairwise.complete.obs")
+
+
+r <- cor(df, use="complete.obs")
+round(r,2)
+
+x <- data.frame(round(r,2))
+sort(x[1,], decreasing = TRUE)[1:5]
+
+ggcorrplot(sort(x[1,], decreasing = TRUE)[1:5])
+
+
+application_train['DAYS_BIRTH'] = abs(application_train['DAYS_BIRTH'])
+application_train['DAYS_BIRTH'].corr(application_train['TARGET'])
+
+
+#a negative linear relationship with the target and client's age
+
+cor(application_train['DAYS_BIRTH'],application_train['TARGET'], use="complete.obs")
+
+
+
+hist(application_train$DAYS_BIRTH/365,main = 'Age of Client', xlab='Age (years)',ylab='count', bins = 25)
+
+
+
+
+sm.density.compare(pplication_train$DAYS_BIRTH, target, xlab="Miles Per Gallon")
+title(main="Distribution of Ages'")
+
+# add legend via mouse click
+colfill<-c(2:(2+length(levels(cyl.f))))
+legend(locator(1), levels(cyl.f), fill=colfill)
+
+
+density_plot<-density(application_train$DAYS_BIRTH / 365, bw = "nrd0", adjust = 1,
+        kernel = c("gaussian", "epanechnikov", "rectangular",
+                   "triangular", "biweight",
+                   "cosine", "optcosine"),
+        weights = NULL, window = kernel, width,
+        give.Rkern = FALSE,
+        #n = 512, from, to, cut = 3, na.rm = FALSE, ...
+        )
+
+plot(density_plot)
