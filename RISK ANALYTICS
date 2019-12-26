@@ -263,13 +263,103 @@ colfill<-c(2:(2+length(levels(cyl.f))))
 legend(locator(1), levels(cyl.f), fill=colfill)
 
 
-density_plot<-density(application_train$DAYS_BIRTH / 365, bw = "nrd0", adjust = 1,
+#curve skews towards the younger end of the range, days_birth variable useful with negative corrolation
+density_plot<-density(application_train$DAYS_BIRTH[application_train$TARGET==1] / 365, bw = "nrd0", adjust = 1,
         kernel = c("gaussian", "epanechnikov", "rectangular",
                    "triangular", "biweight",
                    "cosine", "optcosine"),
         weights = NULL, window = kernel, width,
         give.Rkern = FALSE,
-        #n = 512, from, to, cut = 3, na.rm = FALSE, ...
+        )
+density_plot<-density(application_train$DAYS_BIRTH[application_train$TARGET==0] / 365, bw = "nrd0", adjust = 1,
+        kernel = c("gaussian", "epanechnikov", "rectangular",
+                   "triangular", "biweight",
+                   "cosine", "optcosine"),
+        weights = NULL, window = kernel, width,
+        give.Rkern = FALSE,
+        )
+plot(density_plot)
+
+
+#average failure to repay loans by age group
+#create Bins Label
+age_data = application_train[,c('TARGET', 'DAYS_BIRTH')]
+age_data['YEARS_BIRTH'] = age_data['DAYS_BIRTH'] / 365
+
+bins <- seq0, 70, by=5)
+labels <- bins
+rangelabels <- paste(head(labels,-1), tail(labels,-1), sep="-")
+age_data['YEARS_BINNED'] <- cut(age_data$YEARS_BIRTH, bins, rangelabels)
+
+age_data_group <- age_data %>%
+  group_by(YEARS_BINNED) %>%
+  summarise_all("mean")
+
+#younger applicants are more likely to not repay the loan
+barplot(age_data_group$TARGET *100~age_data_group$YEARS_BINNED,xlab='Age Group (years)',ylab='Failure to Repay (%)')
+
+
+#variables with strongest corrolation
+cor(application_train['EXT_SOURCE_1'],application_train['TARGET'], use="complete.obs")
+cor(application_train['EXT_SOURCE_2'],application_train['TARGET'], use="complete.obs")
+cor(application_train['EXT_SOURCE_3'],application_train['TARGET'], use="complete.obs")
+
+
+#All three EXT_SOURCE features are negatively correlated with the dependent variable
+EXT_SOURCE_data = application_train[,c('TARGET', 'EXT_SOURCE_1', 'EXT_SOURCE_2', 'EXT_SOURCE_3', 'DAYS_BIRTH')]
+EXT_SOURCE_data_corrs = cor(EXT_SOURCE_data, use="complete.obs")
+
+
+
+density_plot<-density(na.omit(application_train$EXT_SOURCE_1[application_train$TARGET==1]) / 365, bw = "nrd0", adjust = 1,main='target == 0',
+        kernel = c("gaussian", "epanechnikov", "rectangular",
+                   "triangular", "biweight",
+                   "cosine", "optcosine"),
+        weights = NULL, window = kernel, width,
+        give.Rkern = FALSE,
         )
 
 plot(density_plot)
+density_plot<-density(na.omit(application_train$EXT_SOURCE_1[application_train$TARGET==0]) / 365, bw = "nrd0", adjust = 1,main='target == 0',
+        kernel = c("gaussian", "epanechnikov", "rectangular",
+                   "triangular", "biweight",
+                   "cosine", "optcosine"),
+        weights = NULL, window = kernel, width,
+        give.Rkern = FALSE,
+        )
+plot(density_plot)
+density_plot<-density(na.omit(application_train$EXT_SOURCE_2[application_train$TARGET==1]) / 365, bw = "nrd0", adjust = 1,main='target == 1',
+        kernel = c("gaussian", "epanechnikov", "rectangular",
+                   "triangular", "biweight",
+                   "cosine", "optcosine"),
+        weights = NULL, window = kernel, width,
+        give.Rkern = FALSE,
+        )
+plot(density_plot)
+
+density_plot<-density(na.omit(application_train$EXT_SOURCE_2[application_train$TARGET==0]) / 365, bw = "nrd0", adjust = 1,main='target == 0',
+        kernel = c("gaussian", "epanechnikov", "rectangular",
+                   "triangular", "biweight",
+                   "cosine", "optcosine"),
+        weights = NULL, window = kernel, width,
+        give.Rkern = FALSE,
+        )
+plot(density_plot)
+density_plot<-density(na.omit(application_train$EXT_SOURCE_3[application_train$TARGET==1]) / 365, bw = "nrd0", adjust = 1,main='target == 1',
+        kernel = c("gaussian", "epanechnikov", "rectangular",
+                   "triangular", "biweight",
+                   "cosine", "optcosine"),
+        weights = NULL, window = kernel, width,
+        give.Rkern = FALSE,
+        )
+plot(density_plot)
+
+density_plot<-density(na.omit(application_train$EXT_SOURCE_3[application_train$TARGET==0]) / 365, bw = "nrd0", adjust = 1,main='target == 0',
+        kernel = c("gaussian", "epanechnikov", "rectangular",
+                   "triangular", "biweight",
+                   "cosine", "optcosine"),
+        weights = NULL, window = kernel, width,
+        give.Rkern = FALSE,
+        )
+plot(density_plot)
+
