@@ -16,6 +16,10 @@
 ############################################################################
 ############################################################################
 
+
+#save.image()
+#load(".RData", envir=tmp.env)
+
 #set work dir
 mem_used()
 getwd()
@@ -30,7 +34,7 @@ list.files(path = "./", pattern = NULL, all.files = FALSE,
 
 #library
 Packages <- c("readr","pryr","RODBC","dplyr","dbplyr","lubridate","ggplot2","ggvis","sqldf","tidyr","cluster","fpc","fastR","graphics","pracma","NbClust","randomForest","ggplot2","NbClust","h2o","caret","dbscan","gmm","TDA","flexclust","skmeans","akmeans","ElemStatLearn"
-				,"mltools","vtreat","ggcorrplot")
+				,"mltools","vtreat","ggcorrplot","GGally","mice","Hmisc","le1071","missForest","mi")
 lapply(Packages, library, character.only = TRUE)
 
 
@@ -362,4 +366,38 @@ density_plot<-density(na.omit(application_train$EXT_SOURCE_3[application_train$T
         give.Rkern = FALSE,
         )
 plot(density_plot)
+
+
+ggpairs(EXT_SOURCE_data) 
+
+
+
+#Feature Engineering
+poly_features <- application_train[,c('EXT_SOURCE_1', 'EXT_SOURCE_2', 'EXT_SOURCE_3', 'DAYS_BIRTH', 'TARGET')]
+
+poly_features_test <- application_test[,c('EXT_SOURCE_1', 'EXT_SOURCE_2', 'EXT_SOURCE_3', 'DAYS_BIRTH')]
+
+poly_target <- poly_features['TARGET']
+poly_features <- poly_features[,-5]
+
+
+poly_target_pre_impute_bk <- poly_target
+poly_features_pre_impute_bk <- poly_features
+
+
+poly_features.imp <- missForest(as.data.frame(poly_features))
+
+
+#poly_features$imputed_EXT_SOURCE_1 <- with(poly_features, impute(EXT_SOURCE_1, mean))
+#poly_features$imputed_EXT_SOURCE_2 <- with(poly_features, impute(EXT_SOURCE_2, mean))
+#poly_features$imputed_EXT_SOURCE_3 <- with(poly_features, impute(EXT_SOURCE_3, mean))
+#poly_features$imputed_DAYS_BIRTH   <- with(poly_features, impute(DAYS_BIRTH, mean))
+
+
+poly_features<- poly(poly_features,degree = 3, raw = FALSE, simple = FALSE)
+poly_features_test<- poly(poly_features_test,degree = 3, raw = FALSE, simple = FALSE)
+
+
+
+
 
