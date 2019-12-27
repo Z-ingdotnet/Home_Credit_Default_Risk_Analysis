@@ -41,7 +41,7 @@ list.files(path = "./", pattern = NULL, all.files = FALSE,
 
 #library
 Packages <- c("readr","pryr","RODBC","dplyr","dbplyr","lubridate","ggplot2","ggvis","sqldf","tidyr","cluster","fpc","fastR","graphics","pracma","NbClust","randomForest","ggplot2","NbClust","h2o","caret","dbscan","gmm","TDA","flexclust","skmeans","akmeans","ElemStatLearn"
-				,"mltools","vtreat","ggcorrplot","GGally","mice","Hmisc","e1071","missForest","mi",
+				,"data.table","mltools","vtreat","ggcorrplot","GGally","mice","Hmisc","e1071","missForest","mi",
 				"haven","foreign","lubridate","stringr","grammar of graphics","ggvis","rgl","htmlwidgets","lme4/nlme","car","mgcv","multcomp","vcd","glmnet","caret","shiny","R Markdown","infer","janitor","BioConductor","Knitr","Mlr","Quanteda.dictionaries","quanteda ","DT","RCrawler","Caret","Leaflet","Janitor","Text2Vec","DataScienceR","SnowballC","magrittr"
 				,"imputeR"
 				)
@@ -228,11 +228,13 @@ poly_features %>%
     )
 
 
+formula = y ~ .^2 
 
+model.matrix(formula, data=as.data.frame(poly_features))
 
 formula <- as.formula(paste(' ~ A:B + ',paste('poly(',colnames(data),',2, raw=TRUE)[, 2]',collapse = ' + ')))
 
- model.matrix(formula, data=data)
+ model.matrix(formula, data=poly_features)
 
 
 
