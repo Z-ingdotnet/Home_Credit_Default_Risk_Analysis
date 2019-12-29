@@ -286,8 +286,6 @@ hist(application_train$DAYS_BIRTH/365,main = 'Age of Client', xlab='Age (years)'
 
 
 
-sm.density.compare(pplication_train$DAYS_BIRTH, target, xlab="Miles Per Gallon")
-title(main="Distribution of Ages'")
 
 # add legend via mouse click
 colfill<-c(2:(2+length(levels(cyl.f))))
