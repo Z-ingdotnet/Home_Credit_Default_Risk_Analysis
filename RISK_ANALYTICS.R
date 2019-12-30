@@ -27,7 +27,11 @@
 #rm(list =  c("POS_CASH_balance","previous_application","installments_payments","bureau"
 #        ,"bureau_balance","credit_card_balance"))
 
-#set work dir
+
+##############################
+# 0 - set work dir
+##############################
+
 mem_used()
 getwd()
 setwd("X:/Users/119987/HC/")
@@ -40,7 +44,9 @@ list.files(path = "./", pattern = NULL, all.files = FALSE,
 .libPaths()
 .libPaths("C:/Program Files/R/R-3.6.1/library")
 
-
+##################################################
+# 1 - Install Package Automatically
+##################################################
 ipak <- function(pkg){
     new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
     if (length(new.pkg)) 
@@ -48,18 +54,18 @@ ipak <- function(pkg){
     sapply(pkg, require, character.only = TRUE)
 }
 
-# usage
 
-
-
-#library
+##################################################
+## 2 - Load Librarys at once
+##
+## 
+##################################################
 Packages <- c("readr","pryr","RODBC","dplyr","dbplyr","lubridate","ggplot2","ggvis","sqldf","tidyr","cluster","fpc","fastR","graphics","pracma","NbClust","randomForest","ggplot2","NbClust","h2o","caret","dbscan","gmm","TDA","flexclust","skmeans","akmeans","ElemStatLearn"
 				,"data.table","mltools","vtreat","ggcorrplot","GGally","mice","Hmisc","e1071","missForest","mi",
-				"haven","foreign","lubridate","stringr","grammar of graphics","ggvis","rgl","htmlwidgets","lme4/nlme","car","mgcv","multcomp","vcd","glmnet","caret","shiny","R Markdown","infer","janitor","BioConductor","Knitr","Mlr","Quanteda.dictionaries","quanteda ","DT","RCrawler","Caret","Leaflet","Janitor","Text2Vec","DataScienceR","SnowballC","magrittr"
+				"haven","foreign","lubridate","stringr","ggvis","rgl","htmlwidgets","lme4/nlme","car","mgcv","multcomp","vcd","glmnet","caret","shiny","R Markdown","infer","janitor","BioConductor","Knitr","Mlr","Quanteda.dictionaries","quanteda ","DT","RCrawler","Caret","Leaflet","Janitor","Text2Vec","DataScienceR","SnowballC","magrittr"
 				,"imputeR"
 				，"tidyverse"
               ,"class","randomForest","RColorBrewer","scales","data.table","readr","plyr","sqldf","ggpcorrplot","ggplot2","cluster","HSAUR","fpc","openxlsx"
-
 				)
 #Packages <- c("tidyverse"
 #              ,"class","randomForest","RColorBrewer","scales","data.table","readr","plyr","sqldf","ggpcorrplot","ggplot2","cluster","HSAUR","fpc","openxlsx")
@@ -67,7 +73,10 @@ Packages <- c("readr","pryr","RODBC","dplyr","dbplyr","lubridate","ggplot2","ggv
 lapply(Packages, library, character.only = TRUE)
 #ipak(Packages)
 
-# import data
+
+##############################
+# 3 import data
+##############################
 application_train <- read_csv("./application_train.csv")
 head(application_train,10)
 
@@ -90,15 +99,21 @@ head(application_test,10)
 #application_train_bk<- application_train
 #application_test_bk<- application_test
 
+##############################
+# 3 Examine data
+##############################
+
 names(application_train)
 
 str(application_train)
 hist(application_train$TARGET)
 table(application_train[,c(2)]) #an imbalanced class problem
 
-#examine missing values by columns
-sapply(data.frame(application_train), function(x) sum(is.na (x)))
 
+##############################
+# 3.1 examine missing values by columns
+##############################
+sapply(data.frame(application_train), function(x) sum(is.na (x)))
 
 #percentage of total
 options(scipen = 999)
@@ -109,7 +124,12 @@ sapply(data.frame(application_train), function(x) is.factor(x))
 
 
 
-#categorical variables encoding processs
+
+##############################################
+# 4. categorical variables encoding processs
+# 
+#
+##############################################
 
 ##st_count=1
 ##for (f in st_count :length(names(application_train))) {
@@ -213,13 +233,20 @@ for (f in (names(application_train))) {
 }
 
 
-# to do
+################## to do
+#come back to check if method with treatment plan should be used instead of a simple loop application
 #algin training and testing data strcuture 
 
 
 
 
-#Anomalies detection
+
+##############################################
+# 5. Anomalies detection and treatment
+#
+#
+##############################################
+
 summary(application_train['DAYS_EMPLOYED'])
 hist(application_train$DAYS_EMPLOYED)
 
@@ -238,8 +265,6 @@ mean(Anomalies[['TARGET']])
 
 #anomalous days of employment
 length(Anomalies$TARGET)
-
-
 
 
 # Create an anomalous flag column
@@ -262,7 +287,7 @@ application_test$DAYS_EMPLOYED[application_test$DAYS_EMPLOYED>=300000] <- NA
 r=cor(application_train$TARGET,application_train[sapply(application_train, function(x) is.numeric(x))], use="pairwise.complete.obs")
 
 
-r <- cor(df, use="complete.obs")
+r <- cor(application_train, use="complete.obs")
 round(r,2)
 
 x <- data.frame(round(r,2))
@@ -288,8 +313,8 @@ hist(application_train$DAYS_BIRTH/365,main = 'Age of Client', xlab='Age (years)'
 
 
 # add legend via mouse click
-colfill<-c(2:(2+length(levels(cyl.f))))
-legend(locator(1), levels(cyl.f), fill=colfill)
+#colfill<-c(2:(2+length(levels(cyl.f))))
+#legend(locator(1), levels(cyl.f), fill=colfill)
 
 
 #curve skews towards the younger end of the range, days_birth variable useful with negative corrolation
@@ -310,6 +335,11 @@ density_plot<-density(application_train$DAYS_BIRTH[application_train$TARGET==0] 
 plot(density_plot)
 
 
+##############################################
+# 6. Exploration
+#
+#
+##############################################
 
 #average failure to repay loans by age group
 #create Bins Label
@@ -397,26 +427,31 @@ plot(density_plot)
 ggpairs(EXT_SOURCE_data) 
 
 
-
-#Feature Engineering
+##############################################
+# 7. Feature Engineering
+#
+#
+##############################################
 
 poly_features <- application_train[,c('EXT_SOURCE_1', 'EXT_SOURCE_2', 'EXT_SOURCE_3', 'DAYS_BIRTH', 'TARGET')]
 
 poly_features_test <- application_test[,c('EXT_SOURCE_1', 'EXT_SOURCE_2', 'EXT_SOURCE_3', 'DAYS_BIRTH')]
 
 poly_target <- poly_features['TARGET']
+
 poly_features <- poly_features[,-5]
 
 
-poly_target_pre_impute_bk <- poly_target
-poly_features_pre_impute_bk <- poly_features
+#poly_target_pre_impute_bk <- poly_target
+#poly_features_pre_impute_bk <- poly_features
 
 
 #poly_features.imp <- missForest(as.data.frame(poly_features))
 
 
-#imputation
-
+##############################################
+# 7.1. imputation using mean
+##############################################
 #poly_features$imputed_EXT_SOURCE_1 <- Hmisc::impute(poly_features$EXT_SOURCE_1,mean)
 #poly_features$imputed_EXT_SOURCE_2 <- Hmisc::impute(poly_features$EXT_SOURCE_2,mean)
 #poly_features$imputed_EXT_SOURCE_3 <- Hmisc::impute(poly_features$EXT_SOURCE_3,mean)
@@ -433,61 +468,38 @@ poly_features_test$EXT_SOURCE_3 <- Hmisc::impute(poly_features_test$EXT_SOURCE_3
 poly_features_test$DAYS_BIRTH   <- Hmisc::impute(poly_features_test$DAYS_BIRTH,mean)
 
 
-
-
-
-
-
-
-
-
-
-###############################################################################################
+##########################create Poly Features#################################
 #
-#
-#
-#
-#
-poly_features<- poly(as.matrix(poly_features),degree = 3, raw = FALSE, simple = FALSE)
+#poly_features<- poly(as.matrix(poly_features),degree = 3, raw = FALSE, simple = FALSE)
 #poly_features_test<- poly(as.matrix(poly_features_test),degree = 3, raw = FALSE, simple = FALSE)
 
-
-poly_features %>%
-  dplyr::mutate(
-    Linear    = poly(as.matrix(poly_features), degree = 3, raw = TRUE)[ ,1]
-  , Quadratic = poly(as.matrix(poly_features), degree = 3, raw = TRUE)[ ,2]  
-  , Cubic     = poly(as.matrix(poly_features), degree = 3, raw = TRUE)[ ,3]
-    )
-
+#poly_features %>%
+#  dplyr::mutate(
+#    Linear    = poly(as.matrix(poly_features), degree = 3, raw = TRUE)[ ,1]
+#  , Quadratic = poly(as.matrix(poly_features), degree = 3, raw = TRUE)[ ,2]  
+#  , Cubic     = poly(as.matrix(poly_features), degree = 3, raw = TRUE)[ ,3]
+#    )
+#poly_features %>%
+#  mutate(as.data.frame(poly(x =as.matrix(poly_features), degree = 3, raw = TRUE))) 
+#%>%
+#  setNames(c("EXT_SOURCE_1","EXT_SOURCE_2","EXT_SOURCE_3","DAYS_BIRTH"
+#             ,"Linear", "Quadratic", "Cubic"))
 #poly_features$imputed_EXT_SOURCE_1 <- with(poly_features, impute(EXT_SOURCE_1, mean))
 #poly_features$imputed_EXT_SOURCE_2 <- with(poly_features, impute(EXT_SOURCE_2, mean))
 #poly_features$imputed_EXT_SOURCE_3 <- with(poly_features, impute(EXT_SOURCE_3, mean))
 #poly_features$imputed_DAYS_BIRTH   <- with(poly_features, impute(DAYS_BIRTH, mean))
 
-
-poly_features<- poly(poly_features,degree = 3, raw = FALSE, simple = FALSE)
-poly_features_test<- poly(poly_features_test,degree = 3, raw = FALSE, simple = FALSE)
-
-
-formula = y ~ .^2 
-
-model.matrix(formula, data=as.data.frame(poly_features))
-
-formula <- as.formula(paste(' ~ A:B + ',paste('poly(',colnames(data),',2, raw=TRUE)[, 2]',collapse = ' + ')))
-
- model.matrix(formula, data=poly_features)
-
-
-
-
-poly_features %>%
-  mutate(as.data.frame(poly(x =as.matrix(poly_features), degree = 3, raw = TRUE))) 
-%>%
-  setNames(c("EXT_SOURCE_1","EXT_SOURCE_2","EXT_SOURCE_3","DAYS_BIRTH"
-             ,"Linear", "Quadratic", "Cubic"))
+formula = as.formula(paste(' ~ .^3 + ',paste('poly(',colnames(poly_features),',2, raw=TRUE)[, 2]',collapse = ' + ')))
+#as.formula(paste(' ~ A:B + ',paste('poly(',colnames(data),',2, raw=TRUE)[, 2]',collapse = ' + ')))
+poly_features_2=data.frame(model.matrix(formula, data=as.data.frame(poly_features)))
+poly_features_2['TARGET'] = poly_target
 #
-#
-#
-#
-#
-###############################################################################################
+##########################create Poly Features#################################
+
+
+poly_corrs = poly_features.corr()['TARGET'].sort_values()
+
+poly_corrs <- cor(poly_features_2[,-1], use="complete.obs")
+x <- data.frame(round(poly_corrs,2))
+sort(x[1,], decreasing = TRUE)[1:10]
+ggcorrplot(sort(x[1,], decreasing = TRUE)[1:10])
