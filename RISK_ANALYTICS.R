@@ -100,7 +100,7 @@ head(application_test,10)
 #application_test_bk<- application_test
 
 ##############################
-# 3 Examine data
+# 4 Examine data
 ##############################
 
 names(application_train)
@@ -111,7 +111,7 @@ table(application_train[,c(2)]) #an imbalanced class problem
 
 
 ##############################
-# 3.1 examine missing values by columns
+# 4.1 examine missing values by columns
 ##############################
 sapply(data.frame(application_train), function(x) sum(is.na (x)))
 
@@ -126,7 +126,7 @@ sapply(data.frame(application_train), function(x) is.factor(x))
 
 
 ##############################################
-# 4. categorical variables encoding processs
+# 5. categorical variables encoding processs
 # 
 #
 ##############################################
@@ -144,6 +144,7 @@ sapply(data.frame(application_train), function(x) is.factor(x))
 ##      }
 ##}
 
+applicationdata=application_train
 
 encoding_count=0
 #label encoding  (just found out there are packages that have butit in label encoding function e.g. caret)
@@ -161,6 +162,8 @@ for (f in (names(application_train))) {
         encoding_count=encoding_count +1
       }
 }
+
+
 
 
 
@@ -233,16 +236,51 @@ for (f in (names(application_train))) {
 }
 
 
-################## to do
+
+
+varnames_onehot_test=NULL
+for (f in (names(application_test))) {
+
+  if (
+    #(class(application_test[[f]]) == 'character') 
+    (is.character(application_test[[f]])=='TRUE') &
+    ((length(unique(levels(as.factor(application_test[[f]]))))>2))=='TRUE'
+  )  {
+
+    varnames_onehot_test=
+      paste(colnames(application_test[f])
+        #paste("\"",, "\"",sep="")
+
+            ,varnames_onehot_test,sep = ",")
+
+  		}
+}
+varnames_onehot_test
+
+for (f in (names(application_test))) {
+
+  if (
+    #(class(application_test[[f]]) == 'character') 
+    (is.character(application_test[[f]])=='TRUE') &
+    ((length(unique(levels(as.factor(application_test[[f]]))))>2))=='TRUE'
+  )
+    for(unique_value in unique(levels(as.factor(application_test[[f]])))){
+      application_test[paste(colnames(application_test[f]), unique_value, sep = ".")] <- ifelse(application_test$f == unique_value, 1, 0)
+    }
+
+}
+
+
+##############################################
+# to do
 #come back to check if method with treatment plan should be used instead of a simple loop application
 #algin training and testing data strcuture 
-
-
+##############################################
 
 
 
 ##############################################
-# 5. Anomalies detection and treatment
+# 6. Anomalies detection and treatment
 #
 #
 ##############################################
@@ -336,7 +374,7 @@ plot(density_plot)
 
 
 ##############################################
-# 6. Exploration
+# 7. Exploration
 #
 #
 ##############################################
@@ -428,9 +466,9 @@ ggpairs(EXT_SOURCE_data)
 
 
 ##############################################
-# 7. Feature Engineering
-#
-#
+# 8. Feature Engineering
+# 8.1. Poly/ Interaction Terms
+# 8.2. Domain Knowledge Features
 ##############################################
 
 poly_features <- application_train[,c('EXT_SOURCE_1', 'EXT_SOURCE_2', 'EXT_SOURCE_3', 'DAYS_BIRTH', 'TARGET')]
@@ -450,7 +488,7 @@ poly_features <- poly_features[,-5]
 
 
 ##############################################
-# 7.1. imputation using mean
+# 8.1. imputation using mean
 ##############################################
 #poly_features$imputed_EXT_SOURCE_1 <- Hmisc::impute(poly_features$EXT_SOURCE_1,mean)
 #poly_features$imputed_EXT_SOURCE_2 <- Hmisc::impute(poly_features$EXT_SOURCE_2,mean)
@@ -493,13 +531,52 @@ formula = as.formula(paste(' ~ .^3 + ',paste('poly(',colnames(poly_features),',2
 #as.formula(paste(' ~ A:B + ',paste('poly(',colnames(data),',2, raw=TRUE)[, 2]',collapse = ' + ')))
 poly_features_2=data.frame(model.matrix(formula, data=as.data.frame(poly_features)))
 poly_features_2['TARGET'] = poly_target
-#
-##########################create Poly Features#################################
+
+formula_test = as.formula(paste(' ~ .^3 + ',paste('poly(',colnames(poly_features_test),',2, raw=TRUE)[, 2]',collapse = ' + ')))
+poly_features_test_2=data.frame(model.matrix(formula_test, data=as.data.frame(poly_features_test)))
 
 
 poly_corrs = poly_features.corr()['TARGET'].sort_values()
-
 poly_corrs <- cor(poly_features_2[,-1], use="complete.obs")
 x <- data.frame(round(poly_corrs,2))
 sort(x[1,], decreasing = TRUE)[1:10]
 ggcorrplot(sort(x[1,], decreasing = TRUE)[1:10])
+#
+##########################create Poly Features#################################
+
+#Merge polynomial features back to training set
+poly_features_2['SK_ID_CURR'] = application_train['SK_ID_CURR']
+
+application_train_poly<- Reduce(function (a,b) merge(a,b,all.a=TRUE, by="SK_ID_CURR"), list(application_train,poly_features_2[,-c(1,20)]) )
+#application_train_poly <- sqldf("SELECT * FROM application_train LEFT JOIN poly_features_2[,-20] USING(SK_ID_CURR)")
+
+poly_features_test_2['SK_ID_CURR'] = application_test['SK_ID_CURR']
+application_test_poly<- Reduce(function (a,b) merge(a,b,all.a=TRUE, by="SK_ID_CURR"), list(application_test,poly_features_test_2[,-c(1)]) )
+
+
+application_test_poly <- dplyr::bind_cols(application_test_poly, head(application_train_poly[!names(application_train_poly) %in% names(application_test_poly)],48744))
+
+dim(application_train_poly)
+dim(application_test_poly)
+
+##############################################
+# to do
+# apply encoding process to test dataset as well
+# make sure test data has the same strcutre as the training
+##############################################
+
+##############################################
+# 8.2. create Domain Knowledge Features
+##############################################
+application_train_dk_features <- application_train
+application_test_dk_features <-  application_test
+application_train_dk_features['CREDIT_INCOME_PERCENT'] = application_train_dk_features['AMT_CREDIT'] / application_train_dk_features['AMT_INCOME_TOTAL']
+application_train_dk_features['ANNUITY_INCOME_PERCENT'] = application_train_dk_features['AMT_ANNUITY'] / application_train_dk_features['AMT_INCOME_TOTAL']
+application_train_dk_features['CREDIT_TERM'] = application_train_dk_features['AMT_ANNUITY'] / application_train_dk_features['AMT_CREDIT']
+application_train_dk_features['DAYS_EMPLOYED_PERCENT'] = application_train_dk_features['DAYS_EMPLOYED'] / application_train_dk_features['DAYS_BIRTH']
+
+#align the test data
+application_test_dk_features ['CREDIT_INCOME_PERCENT'] = application_test_dk_features ['AMT_CREDIT'] / application_test_dk_features ['AMT_INCOME_TOTAL']
+application_test_dk_features ['ANNUITY_INCOME_PERCENT'] = application_test_dk_features ['AMT_ANNUITY'] / application_test_dk_features ['AMT_INCOME_TOTAL']
+application_test_dk_features ['CREDIT_TERM'] = application_test_dk_features ['AMT_ANNUITY'] / application_test_dk_features ['AMT_CREDIT']
+application_test_dk_features ['DAYS_EMPLOYED_PERCENT'] = application_test_dk_features ['DAYS_EMPLOYED'] / application_test_dk_features ['DAYS_BIRTH']
