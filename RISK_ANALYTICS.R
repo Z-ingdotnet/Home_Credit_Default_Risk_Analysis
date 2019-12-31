@@ -7,7 +7,7 @@
 ###                                                                      ###
 ###                                TITLE:                                ###
 ###                                R CODE                                ###
-###                         AUTHOR: IVERSON ZHOU                         ###
+###                         AUTHOR: ZhuZheng(IVERSON) ZHOU               ###
 ###                           DATE: 2019-12-23                           ###
 ###                              VERSION 1                               ###
 ###   TOPIC: RISK ANALYTICS WITH R on BANK DATA (INITIAL EXPLORATION)    ###
@@ -144,7 +144,7 @@ sapply(data.frame(application_train), function(x) is.factor(x))
 ##      }
 ##}
 
-applicationdata=application_train
+
 
 encoding_count=0
 #label encoding  (just found out there are packages that have butit in label encoding function e.g. caret)
@@ -162,9 +162,6 @@ for (f in (names(application_train))) {
         encoding_count=encoding_count +1
       }
 }
-
-
-
 
 
 # one-hot encoding of categorical variables
@@ -335,7 +332,6 @@ ggcorrplot(sort(x[1,], decreasing = TRUE)[1:5])
 
 
 application_train['DAYS_BIRTH'] = abs(application_train['DAYS_BIRTH'])
-application_train['DAYS_BIRTH'].corr(application_train['TARGET'])
 
 
 #a negative linear relationship with the target and client's age
@@ -527,6 +523,7 @@ poly_features_test$DAYS_BIRTH   <- Hmisc::impute(poly_features_test$DAYS_BIRTH,m
 #poly_features$imputed_EXT_SOURCE_3 <- with(poly_features, impute(EXT_SOURCE_3, mean))
 #poly_features$imputed_DAYS_BIRTH   <- with(poly_features, impute(DAYS_BIRTH, mean))
 
+#train ploy model
 formula = as.formula(paste(' ~ .^3 + ',paste('poly(',colnames(poly_features),',2, raw=TRUE)[, 2]',collapse = ' + ')))
 #as.formula(paste(' ~ A:B + ',paste('poly(',colnames(data),',2, raw=TRUE)[, 2]',collapse = ' + ')))
 poly_features_2=data.frame(model.matrix(formula, data=as.data.frame(poly_features)))
@@ -536,7 +533,7 @@ formula_test = as.formula(paste(' ~ .^3 + ',paste('poly(',colnames(poly_features
 poly_features_test_2=data.frame(model.matrix(formula_test, data=as.data.frame(poly_features_test)))
 
 
-poly_corrs = poly_features.corr()['TARGET'].sort_values()
+
 poly_corrs <- cor(poly_features_2[,-1], use="complete.obs")
 x <- data.frame(round(poly_corrs,2))
 sort(x[1,], decreasing = TRUE)[1:10]
@@ -559,6 +556,11 @@ application_test_poly <- dplyr::bind_cols(application_test_poly, head(applicatio
 dim(application_train_poly)
 dim(application_test_poly)
 
+#> dim(application_train_poly)
+#[1] 307511    273
+#> dim(application_test_poly)
+#[1] 48744   273
+
 ##############################################
 # to do
 # apply encoding process to test dataset as well
@@ -570,13 +572,16 @@ dim(application_test_poly)
 ##############################################
 application_train_dk_features <- application_train
 application_test_dk_features <-  application_test
-application_train_dk_features['CREDIT_INCOME_PERCENT'] = application_train_dk_features['AMT_CREDIT'] / application_train_dk_features['AMT_INCOME_TOTAL']
-application_train_dk_features['ANNUITY_INCOME_PERCENT'] = application_train_dk_features['AMT_ANNUITY'] / application_train_dk_features['AMT_INCOME_TOTAL']
-application_train_dk_features['CREDIT_TERM'] = application_train_dk_features['AMT_ANNUITY'] / application_train_dk_features['AMT_CREDIT']
-application_train_dk_features['DAYS_EMPLOYED_PERCENT'] = application_train_dk_features['DAYS_EMPLOYED'] / application_train_dk_features['DAYS_BIRTH']
+application_train_dk_features['CREDIT_INCOME_PERCENT'] <- application_train_dk_features['AMT_CREDIT'] / application_train_dk_features['AMT_INCOME_TOTAL']
+application_train_dk_features['ANNUITY_INCOME_PERCENT'] <- application_train_dk_features['AMT_ANNUITY'] / application_train_dk_features['AMT_INCOME_TOTAL']
+application_train_dk_features['CREDIT_TERM'] <- application_train_dk_features['AMT_ANNUITY'] / application_train_dk_features['AMT_CREDIT']
+application_train_dk_features['DAYS_EMPLOYED_PERCENT'] <- application_train_dk_features['DAYS_EMPLOYED'] / application_train_dk_features['DAYS_BIRTH']
+application_train_dk_features['INCOME_PER_CHILDREN_PERCENT'] <-application_train_dk_features['AMT_INCOME_TOTAL']/application_train_dk_features['CNT_CHILDREN']
+
 
 #align the test data
-application_test_dk_features ['CREDIT_INCOME_PERCENT'] = application_test_dk_features ['AMT_CREDIT'] / application_test_dk_features ['AMT_INCOME_TOTAL']
-application_test_dk_features ['ANNUITY_INCOME_PERCENT'] = application_test_dk_features ['AMT_ANNUITY'] / application_test_dk_features ['AMT_INCOME_TOTAL']
-application_test_dk_features ['CREDIT_TERM'] = application_test_dk_features ['AMT_ANNUITY'] / application_test_dk_features ['AMT_CREDIT']
-application_test_dk_features ['DAYS_EMPLOYED_PERCENT'] = application_test_dk_features ['DAYS_EMPLOYED'] / application_test_dk_features ['DAYS_BIRTH']
+application_test_dk_features ['CREDIT_INCOME_PERCENT'] <- application_test_dk_features ['AMT_CREDIT'] / application_test_dk_features ['AMT_INCOME_TOTAL']
+application_test_dk_features ['ANNUITY_INCOME_PERCENT'] <- application_test_dk_features ['AMT_ANNUITY'] / application_test_dk_features ['AMT_INCOME_TOTAL']
+application_test_dk_features ['CREDIT_TERM'] <- application_test_dk_features ['AMT_ANNUITY'] / application_test_dk_features ['AMT_CREDIT']
+application_test_dk_features ['DAYS_EMPLOYED_PERCENT'] <- application_test_dk_features ['DAYS_EMPLOYED'] / application_test_dk_features ['DAYS_BIRTH']
+application_test_dk_features['INCOME_PER_CHILDREN_PERCENT'] <-application_test_dk_features['AMT_INCOME_TOTAL']/application_test_dk_features['CNT_CHILDREN']
