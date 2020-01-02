@@ -61,12 +61,12 @@ ipak <- function(pkg){
 ## 
 ##################################################
 Packages <- c("readr","pryr","RODBC","dplyr","dbplyr","lubridate","ggplot2","ggvis","sqldf","tidyr","cluster","fpc","fastR","graphics","pracma","NbClust","randomForest","ggplot2","NbClust","h2o","caret","dbscan","gmm","TDA","flexclust","skmeans","akmeans","ElemStatLearn"
-				,"data.table","mltools","vtreat","ggcorrplot","GGally","mice","Hmisc","e1071","missForest","mi",
-				"haven","foreign","lubridate","stringr","ggvis","rgl","htmlwidgets","lme4/nlme","car","mgcv","multcomp","vcd","glmnet","caret","shiny","R Markdown","infer","janitor","BioConductor","Knitr","Mlr","Quanteda.dictionaries","quanteda ","DT","RCrawler","Caret","Leaflet","Janitor","Text2Vec","DataScienceR","SnowballC","magrittr"
-				,"imputeR"
-				，"tidyverse"
+        ,"data.table","mltools","vtreat","ggcorrplot","GGally","mice","Hmisc","e1071","missForest","mi",
+        "haven","foreign","lubridate","stringr","ggvis","rgl","htmlwidgets","lme4/nlme","car","mgcv","multcomp","vcd","glmnet","caret","shiny","R Markdown","infer","janitor","BioConductor","Knitr","Mlr","Quanteda.dictionaries","quanteda ","DT","RCrawler","Caret","Leaflet","Janitor","Text2Vec","DataScienceR","SnowballC","magrittr"
+        ,"imputeR"
+        ，"tidyverse"
               ,"class","randomForest","RColorBrewer","scales","data.table","readr","plyr","sqldf","ggpcorrplot","ggplot2","cluster","HSAUR","fpc","openxlsx"
-				)
+        )
 #Packages <- c("tidyverse"
 #              ,"class","randomForest","RColorBrewer","scales","data.table","readr","plyr","sqldf","ggpcorrplot","ggplot2","cluster","HSAUR","fpc","openxlsx")
 
@@ -151,7 +151,7 @@ encoding_count=0
 for (f in (names(application_train))) {
 
   if (
-  		 #(class(application_train[[f]]) == 'character') 
+       #(class(application_train[[f]]) == 'character') 
       (is.character(application_train[[f]])=='TRUE') &
       ((length(unique(levels(as.factor(application_train[[f]]))))<=2))=='TRUE'
         )  {
@@ -182,14 +182,14 @@ for (f in (names(application_train))) {
 
             ,varnames_onehot,sep = ",")
 
-  		}
+      }
 }
 varnames_onehot
 
 # only want to create the catP variables
 
 #vartypes <- c(#'clean', 'isBAD', 'poolN', 
-#				'catN')
+#       'catN')
 
 #treatplan <- designTreatmentsZ(application_train
 #                               ,c('WALLSMATERIAL_MODE','HOUSETYPE_MODE','FONDKAPREMONT_MODE','ORGANIZATION_TYPE','WEEKDAY_APPR_PROCESS_START','OCCUPATION_TYPE','NAME_HOUSING_TYPE','NAME_FAMILY_STATUS','NAME_EDUCATION_TYPE','NAME_INCOME_TYPE','NAME_TYPE_SUITE','CODE_GENDER')
@@ -227,7 +227,7 @@ for (f in (names(application_train))) {
     ((length(unique(levels(as.factor(application_train[[f]]))))>2))=='TRUE'
   )
     for(unique_value in unique(levels(as.factor(application_train[[f]])))){
-      application_train[paste(colnames(application_train[f]), unique_value, sep = ".")] <- ifelse(application_train[[f]] == unique_value, 1, 0)
+      application_train[paste(colnames(application_train[f]), unique_value, sep = "_")] <- ifelse(application_train[[f]] == unique_value, 1, 0)
     }
   
 }
@@ -250,7 +250,7 @@ for (f in (names(application_test))) {
 
             ,varnames_onehot_test,sep = ",")
 
-  		}
+      }
 }
 varnames_onehot_test
 
@@ -262,7 +262,7 @@ for (f in (names(application_test))) {
     ((length(unique(levels(as.factor(application_test[[f]]))))>2))=='TRUE'
   )
     for(unique_value in unique(levels(as.factor(application_test[[f]])))){
-      application_test[paste(colnames(application_test[f]), unique_value, sep = ".")] <- ifelse(application_test$[[f]] == unique_value, 1, 0)
+      application_test[paste(colnames(application_test[f]), unique_value, sep = "_")] <- ifelse(application_test$[[f]] == unique_value, 1, 0)
     }
 
 }
@@ -596,14 +596,20 @@ application_test_model<-application_test
 #remove target column 
 application_train_model<-application_train_model[,-c(2)]
 
+application_train_model$DAYS_EMPLOYED_ANOM <-as.factor(application_train_model$DAYS_EMPLOYED_ANOM)
+
+#library(naniar)
+#gg_miss_var(application_train_model)
 
 #application_train_model_v2<-Hmisc::impute(application_train_model,mean)
 impdata <- imputeR::impute(application_train_model, lmFun = "lassoR")
 # calculate the normalised RMSE for the imputation
 Rmse(impdata$imp, missdata, parkinson, norm = TRUE)
 
-train = imputer.transform(train)
-test = imputer.transform(app_test)
+
+imputed_Data <- mice(application_train_model[,-c(254)], m=5, maxit = 50, method = 'pmm', seed = 500)
+
+
 
 
 #scale data
