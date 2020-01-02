@@ -220,16 +220,16 @@ varnames_onehot
 
 
 for (f in (names(application_train))) {
-
+  
   if (
     #(class(application_train[[f]]) == 'character') 
     (is.character(application_train[[f]])=='TRUE') &
     ((length(unique(levels(as.factor(application_train[[f]]))))>2))=='TRUE'
   )
     for(unique_value in unique(levels(as.factor(application_train[[f]])))){
-      application_train[paste(colnames(application_train[f]), unique_value, sep = ".")] <- ifelse(application_train$f == unique_value, 1, 0)
+      application_train[paste(colnames(application_train[f]), unique_value, sep = ".")] <- ifelse(application_train[[f]] == unique_value, 1, 0)
     }
-
+  
 }
 
 
@@ -262,7 +262,7 @@ for (f in (names(application_test))) {
     ((length(unique(levels(as.factor(application_test[[f]]))))>2))=='TRUE'
   )
     for(unique_value in unique(levels(as.factor(application_test[[f]])))){
-      application_test[paste(colnames(application_test[f]), unique_value, sep = ".")] <- ifelse(application_test$f == unique_value, 1, 0)
+      application_test[paste(colnames(application_test[f]), unique_value, sep = ".")] <- ifelse(application_test$[[f]] == unique_value, 1, 0)
     }
 
 }
@@ -585,3 +585,30 @@ application_test_dk_features ['ANNUITY_INCOME_PERCENT'] <- application_test_dk_f
 application_test_dk_features ['CREDIT_TERM'] <- application_test_dk_features ['AMT_ANNUITY'] / application_test_dk_features ['AMT_CREDIT']
 application_test_dk_features ['DAYS_EMPLOYED_PERCENT'] <- application_test_dk_features ['DAYS_EMPLOYED'] / application_test_dk_features ['DAYS_BIRTH']
 application_test_dk_features['INCOME_PER_CHILDREN_PERCENT'] <-application_test_dk_features['AMT_INCOME_TOTAL']/application_test_dk_features['CNT_CHILDREN']
+
+##############################################
+# 9. Model Implementation
+# 9.1 Logistic Regression Implementation
+##############################################
+
+application_train_model<-application_train
+application_test_model<-application_test
+#remove target column 
+application_train_model<-application_train_model[,-c(2)]
+
+
+#application_train_model_v2<-Hmisc::impute(application_train_model,mean)
+impdata <- imputeR::impute(application_train_model, lmFun = "lassoR")
+# calculate the normalised RMSE for the imputation
+Rmse(impdata$imp, missdata, parkinson, norm = TRUE)
+
+train = imputer.transform(train)
+test = imputer.transform(app_test)
+
+
+#scale data
+rescale(s)
+
+#adjustable scale range
+rescale(s, to=c(0,10))
+rescale(s, from=c(0, max(s)))
