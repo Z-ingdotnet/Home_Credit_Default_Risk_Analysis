@@ -233,7 +233,17 @@ for (f in (names(application_train))) {
 }
 
 
+#tidy up colnames
 
+#inject.dots <- function(df) {names(df) <- sub(" ", ".", names(df));df}
+#tidy.name.application_train_model <- make.names(application_train_model, unique=TRUE)
+#make.names(names(application_train),unique = TRUE)
+
+names(application_train) <- gsub(",", "_", names(application_train))
+names(application_train) <- gsub(" ", "_", names(application_train))
+names(application_train) <- gsub(":", "_", names(application_train))
+names(application_train) <- gsub("/", "_", names(application_train))
+names(application_train) <- gsub("-", "_", names(application_train))
 
 varnames_onehot_test=NULL
 for (f in (names(application_test))) {
@@ -262,11 +272,18 @@ for (f in (names(application_test))) {
     ((length(unique(levels(as.factor(application_test[[f]]))))>2))=='TRUE'
   )
     for(unique_value in unique(levels(as.factor(application_test[[f]])))){
-      application_test[paste(colnames(application_test[f]), unique_value, sep = "_")] <- ifelse(application_test$[[f]] == unique_value, 1, 0)
+      application_test[paste(colnames(application_test[f]), unique_value, sep = "_")] <- ifelse(application_test[[f]] == unique_value, 1, 0)
     }
 
 }
 
+
+
+names(application_test) <- gsub(",", "_", names(application_test))
+names(application_test) <- gsub(" ", "_", names(application_test))
+names(application_test) <- gsub(":", "_", names(application_test))
+names(application_test) <- gsub("/", "_", names(application_test))
+names(application_test) <- gsub("-", "_", names(application_test))
 
 ##############################################
 # to do
@@ -596,19 +613,19 @@ application_test_model<-application_test
 #remove target column 
 application_train_model<-application_train_model[,-c(2)]
 
-application_train_model$DAYS_EMPLOYED_ANOM <-as.factor(application_train_model$DAYS_EMPLOYED_ANOM)
+#Error: Must use a vector in `[`, not an object of class matrix.
+#transform to dataframe
+application_train_model<-as.data.frame(application_train_model)
+
 
 #library(naniar)
 #gg_miss_var(application_train_model)
 
-#application_train_model_v2<-Hmisc::impute(application_train_model,mean)
-impdata <- imputeR::impute(application_train_model, lmFun = "lassoR")
-# calculate the normalised RMSE for the imputation
-Rmse(impdata$imp, missdata, parkinson, norm = TRUE)
-
-
-imputed_Data <- mice(application_train_model[,-c(254)], m=5, maxit = 50, method = 'pmm', seed = 500)
-
+application_train_model_v2<-Hmisc::impute(application_train_model,mean)
+#impdata <- imputeR::impute(application_train_model, lmFun = "lassoR")
+#imputed_Data <- mice(application_train_model[,-c(254)], m=5, maxit = 50, method = 'pmm', seed = 500)
+## calculate the normalised RMSE for the imputation
+#Rmse(impdata$imp, missdata, parkinson, norm = TRUE)
 
 
 
