@@ -503,6 +503,8 @@ poly_features <- poly_features[,-5]
 ##############################################
 # 8.1. imputation using mean
 ##############################################
+#poly_features$imputed_EXT_SOURCE_1[is.na(poly_features$imputed_EXT_SOURCE_1)] <- mean(poly_features$imputed_EXT_SOURCE_1,na.rm=T)
+
 #poly_features$imputed_EXT_SOURCE_1 <- Hmisc::impute(poly_features$EXT_SOURCE_1,mean)
 #poly_features$imputed_EXT_SOURCE_2 <- Hmisc::impute(poly_features$EXT_SOURCE_2,mean)
 #poly_features$imputed_EXT_SOURCE_3 <- Hmisc::impute(poly_features$EXT_SOURCE_3,mean)
@@ -611,27 +613,69 @@ application_test_dk_features['INCOME_PER_CHILDREN_PERCENT'] <-application_test_d
 application_train_model<-application_train
 application_test_model<-application_test
 #remove target column 
-application_train_model<-application_train_model[,-c(2)]
+#application_train_model<-application_train_model[,-c(2)]
 
 #Error: Must use a vector in `[`, not an object of class matrix.
 #transform to dataframe
 application_train_model<-as.data.frame(application_train_model)
 
+application_train_model[,c(1)]<-as.factor(application_train_model[,c(1)])
+application_train_model[,c(2)]<-as.factor(application_train_model[,c(2)])
 
 #library(naniar)
 #gg_miss_var(application_train_model)
 
-application_train_model_v2<-Hmisc::impute(application_train_model,mean)
+
+
 #impdata <- imputeR::impute(application_train_model, lmFun = "lassoR")
 #imputed_Data <- mice(application_train_model[,-c(254)], m=5, maxit = 50, method = 'pmm', seed = 500)
 ## calculate the normalised RMSE for the imputation
 #Rmse(impdata$imp, missdata, parkinson, norm = TRUE)
 
+application_train_model_imputed<-application_train_model
+
+
+imputation_count=0
+#label encoding  (just found out there are packages that have butit in label encoding function e.g. caret)
+for (f in (names(application_train_model_imputed))) {
+  
+  if (
+    
+    (is.numeric(application_train_model_imputed[[f]])=='TRUE')
+  )  {
+    
+    application_train_model_imputed[[f]]<-Hmisc::impute(application_train_model_imputed[[f]],mean)
+    
+    imputation_count=imputation_count +1
+  }
+}
+
 
 
 #scale data
-rescale(s)
 
 #adjustable scale range
-rescale(s, to=c(0,10))
-rescale(s, from=c(0, max(s)))
+#rescale(s, to=c(0,10))
+#rescale(s, from=c(0, max(s)))
+
+#application_train_model_imputed_rescaled<-rescale(application_train_model_imputed)
+rescaled_count=0
+#label encoding  (just found out there are packages that have butit in label encoding function e.g. caret)
+for (f in (names(application_train_model_imputed))) {
+  
+  if (
+    
+    (is.numeric(application_train_model_imputed[[f]])=='TRUE')
+  )  {
+    
+    application_train_model_imputed[[f]]<-rescale(application_train_model_imputed[[f]])
+    
+    rescaled_count=rescaled_count +1
+  }
+}
+
+
+
+
+model <- glm(application_train_model_imputedTARGET ~.,family=binomial(link='logit'),data=application_train_model_imputed)
+predicted <- plogis(predict(model, (application_test))
