@@ -61,31 +61,25 @@ ipak <- function(pkg){
 ## 
 ##################################################
 Packages <- c(
-				"readr" ,"openxlsx","data.table","vtreat" , "reshape2" ,"DT" ,"haven","foreign" #Data Structure 
-				,"pryr"，"tidyverse","plyr","dplyr","dbplyr","tidyr","fastR","janitor"  #data wranggling and cleansing
-				,"lubridate","lubridate" #date specifics
-				,"RODBC","sqldf" #SQL query integration
-				,"imputeR" ,"mice","Hmisc","mi" #imputation
-        		,"scales" #Scaling
-       			,"cluster","NbClust","dbscan","flexclust","skmeans","akmeans","fpc","class","pracma" #Clustering and segemntation
+"readr" ,"openxlsx","data.table","vtreat" , "reshape2" ,"DT" ,"haven","foreign","magrittr" #Data Structure 
+,"pryr"，"tidyverse","plyr","dplyr","dbplyr","tidyr","fastR","janitor"  #data wranggling and cleansing
+,"lubridate","lubridate" #date specifics
+,"RODBC","sqldf" #SQL query integration
+,"imputeR" ,"mice","Hmisc","mi" #imputation
+,"scales" #Scaling
+,"cluster","NbClust","dbscan","flexclust","skmeans","akmeans","fpc","class","pracma" #Clustering and segemntation
+,"TDA" ,"BioConductor","multcomp" #Topological and others
+,"ElemStatLearn"
+,"shiny","ggplot2","RColorBrewer","ggpcorrplot","ggcorrplot","ggvis","graphics","GGally","rgl","vcd","Leaflet" #Graphs and visualtion 
+,"R Markdown" ,"Knitr" #documentation
+,"HSAUR","infer","randomForest","h2o","caret","gmm" ,"mltools","e1071","missForest","Mlr","car","mgcv","glmnet","lme4/nlme","DataScienceR"  #Modelling & Machine Learning
+,"Quanteda.dictionaries","quanteda ","stringr","Text2Vec","SnowballC" #text mining
+,"RCrawler" ,"htmlwidgets" # Web and Web Scraping  #Selenium,Scrapy,Beautifulsoup
 
-				,"TDA" ,"BioConductor","multcomp" #Topological and others
-				,"ElemStatLearn"
-  
-				,"shiny","ggplot2","RColorBrewer","ggpcorrplot","ggcorrplot","ggvis","graphics","GGally","rgl","vcd" #Graphs and visualtion 
-				,"R Markdown" ,"Knitr" #documentation
-
-        		,"HSAUR","infer","randomForest","h2o","caret","gmm" ,"mltools","e1071","missForest","Mlr","car","mgcv","glmnet","lme4/nlme"  #Modelling & Machine Learning
-        		     
-				,"Quanteda.dictionaries","quanteda ","stringr" #text mining
-
-				,"RCrawler" ,"htmlwidgets" # Web and Web Scraping  #Selenium,Scrapy,Beautifulsoup
-				,"Leaflet","Janitor","Text2Vec","DataScienceR","SnowballC","magrittr"
-        
-       			#,"bigmemory" ,"gpuR" #Local Training
-        		#,"keras","tensorflow" #Google ML Tools
-        		#,"cloudml"   #Remote Training
-        )
+#,"bigmemory" ,"gpuR" #Local Training
+#,"keras","tensorflow" #Google ML Tools
+#,"cloudml"   #Remote Training
+		)
 #Packages <- c("tidyverse"
 #              ,"class","randomForest","RColorBrewer","scales","data.table","readr","plyr","sqldf","ggpcorrplot","ggplot2","cluster","HSAUR","fpc","openxlsx")
 
