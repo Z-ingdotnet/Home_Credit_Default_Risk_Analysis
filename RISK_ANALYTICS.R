@@ -60,12 +60,32 @@ ipak <- function(pkg){
 ##
 ## 
 ##################################################
-Packages <- c("readr","pryr","RODBC","dplyr","dbplyr","lubridate","ggplot2","ggvis","sqldf","tidyr","cluster","fpc","fastR","graphics","pracma","NbClust","randomForest","ggplot2","NbClust","h2o","caret","dbscan","gmm","TDA","flexclust","skmeans","akmeans","ElemStatLearn"
-        ,"data.table","mltools","vtreat","ggcorrplot","GGally","mice","Hmisc","e1071","missForest","mi",
-        "haven","foreign","lubridate","stringr","ggvis","rgl","htmlwidgets","lme4/nlme","car","mgcv","multcomp","vcd","glmnet","caret","shiny","R Markdown","infer","janitor","BioConductor","Knitr","Mlr","Quanteda.dictionaries","quanteda ","DT","RCrawler","Caret","Leaflet","Janitor","Text2Vec","DataScienceR","SnowballC","magrittr"
-        ,"imputeR"
-        ，"tidyverse"
-              ,"class","randomForest","RColorBrewer","scales","data.table","readr","plyr","sqldf","ggpcorrplot","ggplot2","cluster","HSAUR","fpc","openxlsx"
+Packages <- c(
+				"readr" ,"openxlsx","data.table","vtreat" , "reshape2" ,"DT" ,"haven","foreign" #Data Structure 
+				,"pryr"，"tidyverse","plyr","dplyr","dbplyr","tidyr","fastR","janitor"  #data wranggling and cleansing
+				,"lubridate","lubridate" #date specifics
+				,"RODBC","sqldf" #SQL query integration
+				,"imputeR" ,"mice","Hmisc","mi" #imputation
+        		,"scales" #Scaling
+       			,"cluster","NbClust","dbscan","flexclust","skmeans","akmeans","fpc","class","pracma" #Clustering and segemntation
+
+				,"TDA" ,"BioConductor","multcomp" #Topological and others
+				,"ElemStatLearn"
+    		    
+				,"shiny","ggplot2","RColorBrewer","ggpcorrplot","ggcorrplot","ggvis","graphics","GGally","rgl","vcd" #Graphs and visualtion 
+				,"R Markdown" ,"Knitr" #documentation
+
+        		,"HSAUR","infer","randomForest","h2o","caret","gmm" ,"mltools","e1071","missForest","Mlr","car","mgcv","glmnet","lme4/nlme"  #Modelling & Machine Learning
+        		     
+				,"Quanteda.dictionaries","quanteda ","stringr" #text mining
+
+
+				,"RCrawler" ,"htmlwidgets" # Web and Web Scraping  #Selenium,Scrapy,Beautifulsoup
+				,"Leaflet","Janitor","Text2Vec","DataScienceR","SnowballC","magrittr"
+        
+       			,"bigmemory" ,"gpuR" #Local Training
+        		#,"keras","tensorflow" #Google ML Tools
+        		,"cloudml"   #Remote Training
         )
 #Packages <- c("tidyverse"
 #              ,"class","randomForest","RColorBrewer","scales","data.table","readr","plyr","sqldf","ggpcorrplot","ggplot2","cluster","HSAUR","fpc","openxlsx")
@@ -355,18 +375,13 @@ application_train['DAYS_BIRTH'] = abs(application_train['DAYS_BIRTH'])
 
 cor(application_train['DAYS_BIRTH'],application_train['TARGET'], use="complete.obs")
 
-
-
 hist(application_train$DAYS_BIRTH/365,main = 'Age of Client', xlab='Age (years)',ylab='count', bins = 25)
-
-
 
 
 
 # add legend via mouse click
 #colfill<-c(2:(2+length(levels(cyl.f))))
 #legend(locator(1), levels(cyl.f), fill=colfill)
-
 
 #curve skews towards the younger end of the range, days_birth variable useful with negative corrolation
 density_plot<-density(application_train$DAYS_BIRTH[application_train$TARGET==1] / 365, bw = "nrd0", adjust = 1,
@@ -598,7 +613,7 @@ application_train_dk_features['DAYS_EMPLOYED_PERCENT'] <- application_train_dk_f
 application_train_dk_features['INCOME_PER_CHILDREN_PERCENT'] <-application_train_dk_features['AMT_INCOME_TOTAL']/application_train_dk_features['CNT_CHILDREN']
 
 
-#align the test data
+##align the test data
 application_test_dk_features ['CREDIT_INCOME_PERCENT'] <- application_test_dk_features ['AMT_CREDIT'] / application_test_dk_features ['AMT_INCOME_TOTAL']
 application_test_dk_features ['ANNUITY_INCOME_PERCENT'] <- application_test_dk_features ['AMT_ANNUITY'] / application_test_dk_features ['AMT_INCOME_TOTAL']
 application_test_dk_features ['CREDIT_TERM'] <- application_test_dk_features ['AMT_ANNUITY'] / application_test_dk_features ['AMT_CREDIT']
@@ -612,11 +627,11 @@ application_test_dk_features['INCOME_PER_CHILDREN_PERCENT'] <-application_test_d
 
 application_train_model<-application_train
 application_test_model<-application_test
-#remove target column 
+##remove target column 
 #application_train_model<-application_train_model[,-c(2)]
 
-#Error: Must use a vector in `[`, not an object of class matrix.
-#transform to dataframe
+##Error: Must use a vector in `[`, not an object of class matrix.
+##transform to dataframe
 application_train_model<-as.data.frame(application_train_model)
 
 application_train_model[,c(1)]<-as.factor(application_train_model[,c(1)])
@@ -636,7 +651,6 @@ application_train_model_imputed<-application_train_model
 
 
 imputation_count=0
-#label encoding  (just found out there are packages that have butit in label encoding function e.g. caret)
 for (f in (names(application_train_model_imputed))) {
   
   if (
@@ -660,7 +674,6 @@ for (f in (names(application_train_model_imputed))) {
 
 #application_train_model_imputed_rescaled<-rescale(application_train_model_imputed)
 rescaled_count=0
-#label encoding  (just found out there are packages that have butit in label encoding function e.g. caret)
 for (f in (names(application_train_model_imputed))) {
   
   if (
@@ -676,6 +689,15 @@ for (f in (names(application_train_model_imputed))) {
 
 
 
+#local trail as not enough memory
+#model_glm <- glm(TARGET ~.,family=binomial(link='logit'),data=application_train_model_imputed[1:60000,])
+#predicted <- plogis(predict(model, (application_test)))
 
-model <- glm(application_train_model_imputedTARGET ~.,family=binomial(link='logit'),data=application_train_model_imputed)
-predicted <- plogis(predict(model, (application_test))
+
+
+#train model on tensorflow
+#model <- glm(TARGET ~.,family=binomial(link='logit'),data=application_train_model_imputed)
+#predicted <- plogis(predict(model, (application_test)))
+
+cloudml_train("train.R")
+
