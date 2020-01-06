@@ -71,7 +71,7 @@ Packages <- c(
 
 				,"TDA" ,"BioConductor","multcomp" #Topological and others
 				,"ElemStatLearn"
-    		    
+  
 				,"shiny","ggplot2","RColorBrewer","ggpcorrplot","ggcorrplot","ggvis","graphics","GGally","rgl","vcd" #Graphs and visualtion 
 				,"R Markdown" ,"Knitr" #documentation
 
@@ -79,13 +79,12 @@ Packages <- c(
         		     
 				,"Quanteda.dictionaries","quanteda ","stringr" #text mining
 
-
 				,"RCrawler" ,"htmlwidgets" # Web and Web Scraping  #Selenium,Scrapy,Beautifulsoup
 				,"Leaflet","Janitor","Text2Vec","DataScienceR","SnowballC","magrittr"
         
-       			,"bigmemory" ,"gpuR" #Local Training
+       			#,"bigmemory" ,"gpuR" #Local Training
         		#,"keras","tensorflow" #Google ML Tools
-        		,"cloudml"   #Remote Training
+        		#,"cloudml"   #Remote Training
         )
 #Packages <- c("tidyverse"
 #              ,"class","randomForest","RColorBrewer","scales","data.table","readr","plyr","sqldf","ggpcorrplot","ggplot2","cluster","HSAUR","fpc","openxlsx")
