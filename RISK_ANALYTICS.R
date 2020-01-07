@@ -61,17 +61,18 @@ ipak <- function(pkg){
 ## 
 ##################################################
 Packages <- c(
-"readr" ,"openxlsx","data.table","vtreat" , "reshape2" ,"DT" ,"haven","foreign","magrittr" #Data Structure 
-,"pryr"，"tidyverse","plyr","dplyr","dbplyr","tidyr","fastR","janitor"  #data wranggling and cleansing
+"readr" ,"openxlsx","data.table","vtreat" , "reshape2" ,"DT" ,"haven","foreign"#,"magrittr" #Data Structure 
+,"pryr"#，"tidyverse"
+,"plyr","dplyr","dbplyr","tidyr","fastR","janitor"  #data wranggling and cleansing
 ,"lubridate","lubridate" #date specifics
 ,"RODBC","sqldf" #SQL query integration
 ,"imputeR" ,"mice","Hmisc","mi" #imputation
 ,"scales" #Scaling
-,"cluster","NbClust","dbscan","flexclust","skmeans","akmeans","fpc","class","pracma" #Clustering and segemntation
-,"TDA" ,"BioConductor","multcomp" #Topological and others
+,"NbClust","dbscan","flexclust","skmeans","akmeans","fpc","class","pracma"#,"cluster" #Clustering and segemntation
+,"multcomp" #,"TDA" #,"BioConductor"#Topological and others
 ,"ElemStatLearn"
-,"shiny","ggplot2","RColorBrewer","ggpcorrplot","ggcorrplot","ggvis","graphics","GGally","rgl","vcd","Leaflet" #Graphs and visualtion 
-,"R Markdown" ,"Knitr" #documentation
+,"shiny","ggplot2","RColorBrewer","ggcorrplot","ggvis","graphics","GGally","rgl","vcd","leaflet"#,"ggpcorrplot" #Graphs and visualtion 
+,"rmarkdown" ,"knitr" #documentation
 ,"HSAUR","infer","randomForest","h2o","caret","gmm" ,"mltools","e1071","missForest","Mlr","car","mgcv","glmnet","lme4/nlme","DataScienceR"  #Modelling & Machine Learning
 ,"Quanteda.dictionaries","quanteda ","stringr","Text2Vec","SnowballC" #text mining
 ,"RCrawler" ,"htmlwidgets" # Web and Web Scraping  #Selenium,Scrapy,Beautifulsoup
