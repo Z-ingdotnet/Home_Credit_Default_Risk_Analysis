@@ -68,10 +68,10 @@ Packages <- c(
 ,"imputeR" ,"mice","Hmisc","mi" #imputation
 ,"scales" #Scaling
 ,"cluster","NbClust","dbscan","flexclust","skmeans","akmeans","fpc","class","pracma" #Clustering and segemntation
-,"TDA" ,"BioConductor","multcomp" #Topological and others
+,"TDA" ,"multcomp"#,"BioConductor" #Topological and others
 ,"ElemStatLearn"
-,"shiny","ggplot2","RColorBrewer","ggpcorrplot","ggcorrplot","ggvis","graphics","GGally","rgl","vcd","Leaflet" #Graphs and visualtion 
-,"R Markdown" ,"Knitr" #documentation
+,"shiny","ggplot2","RColorBrewer","ggcorrplot","ggvis","graphics","GGally","rgl","vcd","leaflet"#,"ggpcorrplot" #Graphs and visualtion 
+,"rmarkdown" ,"knitr" #documentation
 ,"HSAUR","infer","randomForest","h2o","caret","gmm" ,"mltools","e1071","missForest","Mlr","car","mgcv","glmnet","lme4/nlme","DataScienceR"  #Modelling & Machine Learning
 ,"Quanteda.dictionaries","quanteda ","stringr","Text2Vec","SnowballC" #text mining
 ,"RCrawler" ,"htmlwidgets" # Web and Web Scraping  #Selenium,Scrapy,Beautifulsoup
@@ -79,7 +79,7 @@ Packages <- c(
 #,"bigmemory" ,"gpuR" #Local Training
 #,"keras","tensorflow" #Google ML Tools
 #,"cloudml"   #Remote Training
-		)
+    )
 #Packages <- c("tidyverse"
 #              ,"class","randomForest","RColorBrewer","scales","data.table","readr","plyr","sqldf","ggpcorrplot","ggplot2","cluster","HSAUR","fpc","openxlsx")
 
@@ -693,4 +693,3 @@ for (f in (names(application_train_model_imputed))) {
 #predicted <- plogis(predict(model, (application_test)))
 
 cloudml_train("train.R")
-
