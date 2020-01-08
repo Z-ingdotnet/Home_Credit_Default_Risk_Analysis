@@ -33,6 +33,8 @@
 ##############################
 
 mem_used()
+memory.limit()
+options(scipen = 999)
 getwd()
 setwd("X:/Users/119987/HC/")
 #setwd("C:/Users/Zing/Downloads/home-credit-default-risk/")
@@ -616,13 +618,13 @@ application_test_dk_features['INCOME_PER_CHILDREN_PERCENT'] <-application_test_d
 
 ##############################################
 # 9. Model Implementation
-# 9.1 Logistic Regression Implementation
+# 9.1 Logistic Regression Implementation (Baseline)
 ##############################################
 
 application_train_model<-application_train
 application_test_model<-application_test
 ##remove target column 
-#application_train_model<-application_train_model[,-c(2)]
+application_train_model<-application_train_model[,-c(2)]
 
 ##Error: Must use a vector in `[`, not an object of class matrix.
 ##transform to dataframe
@@ -630,6 +632,10 @@ application_train_model<-as.data.frame(application_train_model)
 
 application_train_model[,c(1)]<-as.factor(application_train_model[,c(1)])
 application_train_model[,c(2)]<-as.factor(application_train_model[,c(2)])
+
+application_test_model<-as.data.frame(application_test_model)
+application_test_model[,c(1)]<-as.factor(application_test_model[,c(1)])
+application_test_model[,c(2)]<-as.factor(application_test_model[,c(2)])
 
 #library(naniar)
 #gg_miss_var(application_train_model)
@@ -660,23 +666,38 @@ for (f in (names(application_train_model_imputed))) {
 
 
 
+application_test_model_imputed<-application_test_model
+
+
+imputation_test_count=0
+for (f in (names(application_test_model_imputed))) {
+  
+  if (
+    
+    (is.numeric(application_test_model_imputed[[f]])=='TRUE')
+  )  {
+    
+    application_test_model_imputed[[f]]<-Hmisc::impute(application_test_model_imputed[[f]],mean)
+    
+    imputation_test_count=imputation_count +1
+  }
+}
+
+
 #scale data
 
 #adjustable scale range
 #rescale(s, to=c(0,10))
 #rescale(s, from=c(0, max(s)))
 
-#application_train_model_imputed_rescaled<-rescale(application_train_model_imputed)
+#application_train_model_imputed<-rescale(application_train_model_imputed)
 rescaled_count=0
 for (f in (names(application_train_model_imputed))) {
-  
   if (
     
     (is.numeric(application_train_model_imputed[[f]])=='TRUE')
   )  {
-    
-    application_train_model_imputed[[f]]<-rescale(application_train_model_imputed[[f]])
-    
+    application_train_model_imputed[[f]]<-rescale(application_train_model_imputed[[f]]) 
     rescaled_count=rescaled_count +1
   }
 }
@@ -684,7 +705,16 @@ for (f in (names(application_train_model_imputed))) {
 
 
 #local trail as not enough memory
+
+#take random sample for training
+set.seed(12345)
+sample<-sample(unique(application_train_model_imputed$SK_ID_CURR) ,nrow(application_train_model_imputed)*0.2)
+application_train_model_imputed<-data.frame(subset(application_train_model_imputed, SK_ID_CURR %in% sample#[,-c(4)][,c(6,73:96)]
+	)
+)
+#ptm <- proc.time()
 #model_glm <- glm(TARGET ~.,family=binomial(link='logit'),data=application_train_model_imputed[1:60000,])
+#proc.time() - ptm
 #predicted <- plogis(predict(model, (application_test)))
 
 #summary(model_glm)
@@ -701,4 +731,3 @@ for (f in (names(application_train_model_imputed))) {
 #predicted <- plogis(predict(model, (application_test)))
 
 cloudml_train("train.R")
-
