@@ -115,6 +115,8 @@ head(application_test,10)
 #application_train_bk<- application_train
 #application_test_bk<- application_test
 
+
+
 ##############################
 # 4 Examine data
 ##############################
@@ -178,6 +180,7 @@ for (f in (names(application_train))) {
         encoding_count=encoding_count +1
       }
 }
+
 
 
 # one-hot encoding of categorical variables
@@ -261,6 +264,11 @@ names(application_train) <- gsub(":", "_", names(application_train))
 names(application_train) <- gsub("/", "_", names(application_train))
 names(application_train) <- gsub("-", "_", names(application_train))
 
+
+
+
+
+
 varnames_onehot_test=NULL
 for (f in (names(application_test))) {
 
@@ -279,6 +287,8 @@ for (f in (names(application_test))) {
       }
 }
 varnames_onehot_test
+
+
 
 for (f in (names(application_test))) {
 
@@ -300,6 +310,12 @@ names(application_test) <- gsub(" ", "_", names(application_test))
 names(application_test) <- gsub(":", "_", names(application_test))
 names(application_test) <- gsub("/", "_", names(application_test))
 names(application_test) <- gsub("-", "_", names(application_test))
+
+
+names(application_train[!names(application_train) %in% names(application_test)])
+
+#algin training and testing data strcuture 
+application_test <- dplyr::bind_cols(application_test, head(application_train[!names(application_train) %in% names(application_test)],48744))
 
 ##############################################
 # to do
@@ -581,6 +597,7 @@ poly_features_test_2['SK_ID_CURR'] = application_test['SK_ID_CURR']
 application_test_poly<- Reduce(function (a,b) merge(a,b,all.a=TRUE, by="SK_ID_CURR"), list(application_test,poly_features_test_2[,-c(1)]) )
 
 
+#algin training and testing data strcuture 
 application_test_poly <- dplyr::bind_cols(application_test_poly, head(application_train_poly[!names(application_train_poly) %in% names(application_test_poly)],48744))
 
 dim(application_train_poly)
@@ -706,23 +723,86 @@ for (f in (names(application_train_model_imputed))) {
 
 #local trail as not enough memory
 
+
+##############################################
+# 9.1 Logistic Regression Implementation (Baseline)
+##############################################
 #take random sample for training
+
+
+
+application_train_imputed<-application_train
+
+
+imputation_count=0
+for (f in (names(application_train_imputed))) {
+  
+  if (
+    
+    (is.numeric(application_train_imputed[[f]])=='TRUE')
+  )  {
+    
+    application_train_imputed[[f]]<-Hmisc::impute(application_train_imputed[[f]],mean)
+    
+    imputation_count=imputation_count +1
+  }
+}
+
+
+
+application_test_imputed<-application_test
+
+
+imputation_test_count=0
+for (f in (names(application_test_imputed))) {
+  
+  if (
+    
+    (is.numeric(application_test_imputed[[f]])=='TRUE')
+  )  {
+    
+    application_test_imputed[[f]]<-Hmisc::impute(application_test_imputed[[f]],mean)
+    
+    imputation_test_count=imputation_count +1
+  }
+}
+
+
 set.seed(12345)
-sample<-sample(unique(application_train_model_imputed$SK_ID_CURR) ,nrow(application_train_model_imputed)*0.2)
-application_train_model_imputed<-data.frame(subset(application_train_model_imputed, SK_ID_CURR %in% sample#[,-c(4)][,c(6,73:96)]
+sample<-sample(unique(application_train_imputed$SK_ID_CURR) ,nrow(application_train_imputed)*0.3)
+application_train_imputed<-data.frame(subset(application_train_imputed, SK_ID_CURR %in% sample#[,-c(4)][,c(6,73:96)]
 	)
 )
-#ptm <- proc.time()
-#model_glm <- glm(TARGET ~.,family=binomial(link='logit'),data=application_train_model_imputed[1:60000,])
-#proc.time() - ptm
-#predicted <- plogis(predict(model, (application_test)))
+
+names(application_train_imputed[,c(1:9)])
+
+ptm <- proc.time()
+model_glm <- glm(TARGET ~.,family=binomial(link='logit'),maxit=100,data=application_train_imputed[,c(1:15)])
+#model_glm <- glm(TARGET ~.,family=binomial(link='logit'),maxit=100,data=application_train_imputed[1:60000,])
+proc.time() - ptm
+##predicted <- plogis(predict(model_glm, (application_test)))
 
 #summary(model_glm)
 #anova(model_glm, test="Chisq")
-#fitted.results <- predict(model_glm,newdata=application_test_model)
-#fitted.results <- ifelse(fitted.results > 0.5,1,0)
-#misClasificError <- mean(fitted.results != test$TARGET)
-#print(paste('Accuracy',1-misClasificError))
+
+
+#Error in model.frame.default(Terms, newdata, na.action = na.action, xlev = object$xlevels) : 
+#get around this issue by relevelling factors the new factor to match the training data.
+application_test_imputed$NAME_INCOME_TYPE <- factor(application_test$NAME_INCOME_TYPE, levels = levels(application_train$NAME_INCOME_TYPE))
+application_test_imputed$NAME_EDUCATION_TYPE <- factor(application_test$NAME_EDUCATION_TYPE, levels = levels(application_train$NAME_EDUCATION_TYPE))
+application_test_imputed$ORGANIZATION_TYPE <- factor(application_test$ORGANIZATION_TYPE, levels = levels(application_train$ORGANIZATION_TYPE))
+application_test_imputed$CODE_GENDER <- factor(application_test$CODE_GENDER, levels = levels(application_train$CODE_GENDER))
+
+application_test_imputed$NAME_INCOME_TYPE <- factor(application_test$NAME_INCOME_TYPE, levels = levels(application_train$NAME_INCOME_TYPE))
+
+application_test_imputed$NAME_INCOME_TYPE <- factor(application_test$NAME_INCOME_TYPE, levels = levels(application_train$NAME_INCOME_TYPE))
+
+
+
+fitted.results <- predict(model_glm,newdata=application_test_imputed)
+fitted.results <- ifelse(fitted.results > 0.5,1,0)
+misClasificError <- mean(fitted.results != application_test_imputed$TARGET)
+print(paste('Accuracy',1-misClasificError))
 
 
 
