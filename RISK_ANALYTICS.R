@@ -641,7 +641,7 @@ application_test_dk_features['INCOME_PER_CHILDREN_PERCENT'] <-application_test_d
 application_train_model<-application_train
 application_test_model<-application_test
 ##remove target column 
-application_train_model<-application_train_model[,-c(2)]
+#application_train_model<-application_train_model[,-c(2)]
 
 ##Error: Must use a vector in `[`, not an object of class matrix.
 ##transform to dataframe
@@ -683,6 +683,30 @@ for (f in (names(application_train_model_imputed))) {
 
 
 
+#scale data
+
+#adjustable scale range
+#rescale(s, to=c(0,10))
+#rescale(s, from=c(0, max(s)))
+
+#application_train_model_imputed<-rescale(application_train_model_imputed)
+rescaled_count=0
+for (f in (names(application_train_model_imputed))) {
+  if (
+    
+    (is.numeric(application_train_model_imputed[[f]])=='TRUE')
+    | class(application_train_model_imputed[[f]])=="impute"
+  )  {
+    application_train_model_imputed[[f]]<-rescale(application_train_model_imputed[[f]]) 
+    rescaled_count=rescaled_count +1
+  }
+}
+application_train_model_imputed$AMT_ANNUITY<-rescale(as.numeric(application_train_model_imputed$AMT_ANNUITY))
+application_train_model_imputed$AMT_ANNUITY<-rescale(as.numeric(application_train_model_imputed$AMT_GOODS_PRICE))
+
+
+
+
 application_test_model_imputed<-application_test_model
 
 
@@ -700,24 +724,21 @@ for (f in (names(application_test_model_imputed))) {
   }
 }
 
-
-#scale data
-
-#adjustable scale range
-#rescale(s, to=c(0,10))
-#rescale(s, from=c(0, max(s)))
-
-#application_train_model_imputed<-rescale(application_train_model_imputed)
 rescaled_count=0
-for (f in (names(application_train_model_imputed))) {
+for (f in (names(application_test_model_imputed))) {
   if (
     
-    (is.numeric(application_train_model_imputed[[f]])=='TRUE')
+    (is.numeric(application_test_model_imputed[[f]])=='TRUE')
+    | class(application_test_model_imputed[[f]])=="impute"
   )  {
-    application_train_model_imputed[[f]]<-rescale(application_train_model_imputed[[f]]) 
+    application_test_model_imputed[[f]]<-rescale(application_test_model_imputed[[f]]) 
     rescaled_count=rescaled_count +1
   }
 }
+application_test_model_imputed$AMT_ANNUITY<-rescale(as.numeric(application_test_model_imputed$AMT_ANNUITY))
+application_test_model_imputed$AMT_ANNUITY<-rescale(as.numeric(application_test_model_imputed$AMT_GOODS_PRICE))
+
+
 
 
 
@@ -729,55 +750,15 @@ for (f in (names(application_train_model_imputed))) {
 ##############################################
 #take random sample for training
 
-
-
-application_train_imputed<-application_train
-
-
-imputation_count=0
-for (f in (names(application_train_imputed))) {
-  
-  if (
-    
-    (is.numeric(application_train_imputed[[f]])=='TRUE')
-  )  {
-    
-    application_train_imputed[[f]]<-Hmisc::impute(application_train_imputed[[f]],mean)
-    
-    imputation_count=imputation_count +1
-  }
-}
-
-
-
-application_test_imputed<-application_test
-
-
-imputation_test_count=0
-for (f in (names(application_test_imputed))) {
-  
-  if (
-    
-    (is.numeric(application_test_imputed[[f]])=='TRUE')
-  )  {
-    
-    application_test_imputed[[f]]<-Hmisc::impute(application_test_imputed[[f]],mean)
-    
-    imputation_test_count=imputation_count +1
-  }
-}
-
-
 set.seed(12345)
-sample<-sample(unique(application_train_imputed$SK_ID_CURR) ,nrow(application_train_imputed)*0.3)
-application_train_imputed<-data.frame(subset(application_train_imputed, SK_ID_CURR %in% sample#[,-c(4)][,c(6,73:96)]
+sample<-sample(unique(application_train_model_imputed$SK_ID_CURR) ,nrow(application_train_model_imputed)*0.2)
+application_train_model_imputed<-data.frame(subset(application_train_model_imputed, SK_ID_CURR %in% sample#[,-c(4)][,c(6,73:96)]
 	)
 )
 
-names(application_train_imputed[,c(1:9)])
 
 ptm <- proc.time()
-model_glm <- glm(TARGET ~.,family=binomial(link='logit'),maxit=100,data=application_train_imputed[,c(1:15)])
+model_glm <- glm(TARGET ~.,family=binomial(link='logit'),maxit=50,data=application_train_model_imputed[,c(2,8,9,10,11)])
 #model_glm <- glm(TARGET ~.,family=binomial(link='logit'),maxit=100,data=application_train_imputed[1:60000,])
 proc.time() - ptm
 ##predicted <- plogis(predict(model_glm, (application_test)))
@@ -788,20 +769,15 @@ proc.time() - ptm
 
 #Error in model.frame.default(Terms, newdata, na.action = na.action, xlev = object$xlevels) : 
 #get around this issue by relevelling factors the new factor to match the training data.
-application_test_imputed$NAME_INCOME_TYPE <- factor(application_test$NAME_INCOME_TYPE, levels = levels(application_train$NAME_INCOME_TYPE))
-application_test_imputed$NAME_EDUCATION_TYPE <- factor(application_test$NAME_EDUCATION_TYPE, levels = levels(application_train$NAME_EDUCATION_TYPE))
-application_test_imputed$ORGANIZATION_TYPE <- factor(application_test$ORGANIZATION_TYPE, levels = levels(application_train$ORGANIZATION_TYPE))
-application_test_imputed$CODE_GENDER <- factor(application_test$CODE_GENDER, levels = levels(application_train$CODE_GENDER))
-
-application_test_imputed$NAME_INCOME_TYPE <- factor(application_test$NAME_INCOME_TYPE, levels = levels(application_train$NAME_INCOME_TYPE))
-
-application_test_imputed$NAME_INCOME_TYPE <- factor(application_test$NAME_INCOME_TYPE, levels = levels(application_train$NAME_INCOME_TYPE))
+application_test_model_imputed$NAME_INCOME_TYPE <- factor(application_test$NAME_INCOME_TYPE, levels = levels(application_train$NAME_INCOME_TYPE))
+application_test_model_imputed$NAME_EDUCATION_TYPE <- factor(application_test$NAME_EDUCATION_TYPE, levels = levels(application_train$NAME_EDUCATION_TYPE))
+application_test_model_imputed$ORGANIZATION_TYPE <- factor(application_test$ORGANIZATION_TYPE, levels = levels(application_train$ORGANIZATION_TYPE))
+application_test_model_imputed$CODE_GENDER <- factor(application_test$CODE_GENDER, levels = levels(application_train$CODE_GENDER))
 
 
-
-fitted.results <- predict(model_glm,newdata=application_test_imputed)
+fitted.results <- predict(model_glm,newdata=application_test_model_imputed[,c(7,8,9,10)])
 fitted.results <- ifelse(fitted.results > 0.5,1,0)
-misClasificError <- mean(fitted.results != application_test_imputed$TARGET)
+misClasificError <- mean(fitted.results != application_test_model_imputed$TARGET)
 print(paste('Accuracy',1-misClasificError))
 
 
