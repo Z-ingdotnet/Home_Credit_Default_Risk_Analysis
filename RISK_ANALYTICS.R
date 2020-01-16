@@ -776,7 +776,8 @@ application_train_model_imputed<-data.frame(subset(application_train_model_imput
 
 
 ptm <- proc.time()
-model_glm <- glm(TARGET ~.,family=binomial(link='logit'),maxit=50,data=application_train_model_imputed[,c(2,8,9,10,11)])
+model_glm <- glm(TARGET ~.,family=binomial(link='logit'),maxit=50,data=application_train_model_imputed)
+#model_glm <- glm(TARGET ~.,family=binomial(link='logit'),maxit=50,data=application_train_model_imputed[,c(2,8,9,10,11)])
 #model_glm <- glm(TARGET ~.,family=binomial(link='logit'),maxit=100,data=application_train_imputed[1:60000,])
 proc.time() - ptm
 ##predicted <- plogis(predict(model_glm, (application_test)))
