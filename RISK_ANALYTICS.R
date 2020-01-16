@@ -252,6 +252,16 @@ for (f in (names(application_train))) {
 }
 
 
+application_train<-application_train %>% dplyr::select(-one_of(
+  c(
+"WALLSMATERIAL_MODE","HOUSETYPE_MODE","FONDKAPREMONT_MODE","ORGANIZATION_TYPE","WEEKDAY_APPR_PROCESS_START","OCCUPATION_TYPE"
+,"NAME_HOUSING_TYPE","NAME_FAMILY_STATUS","NAME_EDUCATION_TYPE","NAME_INCOME_TYPE","NAME_TYPE_SUITE")  
+)
+)
+
+#todo
+
+
 #tidy up colnames
 
 #inject.dots <- function(df) {names(df) <- sub(" ", ".", names(df));df}
@@ -302,6 +312,14 @@ for (f in (names(application_test))) {
     }
 
 }
+
+
+application_test<-application_test %>% dplyr::select(-one_of(
+  c(
+"WALLSMATERIAL_MODE","HOUSETYPE_MODE","FONDKAPREMONT_MODE","ORGANIZATION_TYPE","WEEKDAY_APPR_PROCESS_START","OCCUPATION_TYPE"
+,"NAME_HOUSING_TYPE","NAME_FAMILY_STATUS","NAME_EDUCATION_TYPE","NAME_INCOME_TYPE","NAME_TYPE_SUITE")  
+)
+)
 
 
 
