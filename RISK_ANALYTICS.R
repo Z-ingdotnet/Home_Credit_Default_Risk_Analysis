@@ -529,7 +529,7 @@ ggpairs(EXT_SOURCE_data)
 # 8.2. Domain Knowledge Features
 ##############################################
 
-poly_features <- application_train[,c('EXT_SOURCE_1', 'EXT_SOURCE_2', 'EXT_SOURCE_3', 'DAYS_BIRTH', 'TARGET')]
+poly_features <- application_train[,c('EXT_SOURCE_1', 'EXT_SOURCE_2', 'EXT_SOURCE_3', 'DAYS_BIRTH' #, 'TARGET')]
 
 poly_features_test <- application_test[,c('EXT_SOURCE_1', 'EXT_SOURCE_2', 'EXT_SOURCE_3', 'DAYS_BIRTH')]
 
@@ -608,15 +608,15 @@ ggcorrplot(sort(x[1,], decreasing = TRUE)[1:10])
 #Merge polynomial features back to training set
 poly_features_2['SK_ID_CURR'] = application_train['SK_ID_CURR']
 
-application_train_poly<- Reduce(function (a,b) merge(a,b,all.a=TRUE, by="SK_ID_CURR"), list(application_train,poly_features_2[,-c(1,20)]) )
+application_train_poly<- Reduce(function (a,b) merge(a,b,all.a=TRUE, by="SK_ID_CURR"), list(application_train,poly_features_2[,-c(1:6)]) )
 #application_train_poly <- sqldf("SELECT * FROM application_train LEFT JOIN poly_features_2[,-20] USING(SK_ID_CURR)")
 
 poly_features_test_2['SK_ID_CURR'] = application_test['SK_ID_CURR']
-application_test_poly<- Reduce(function (a,b) merge(a,b,all.a=TRUE, by="SK_ID_CURR"), list(application_test,poly_features_test_2[,-c(1)]) )
+application_test_poly<- Reduce(function (a,b) merge(a,b,all.a=TRUE, by="SK_ID_CURR"), list(application_test,poly_features_test_2[,-c(1:5)]) )
 
 
 #algin training and testing data strcuture 
-application_test_poly <- dplyr::bind_cols(application_test_poly, head(application_train_poly[!names(application_train_poly) %in% names(application_test_poly)],48744))
+#application_test_poly <- dplyr::bind_cols(application_test_poly, head(application_train_poly[!names(application_train_poly) %in% names(application_test_poly)],48744))
 
 dim(application_train_poly)
 dim(application_test_poly)
@@ -635,8 +635,10 @@ dim(application_test_poly)
 ##############################################
 # 8.2. create Domain Knowledge Features
 ##############################################
-application_train_dk_features <- application_train
-application_test_dk_features <-  application_test
+#application_train_dk_features <- application_train
+#application_test_dk_features <-  application_test
+application_train_dk_features <-application_train_poly
+application_test_dk_features <-application_test_poly
 application_train_dk_features['CREDIT_INCOME_PERCENT'] <- application_train_dk_features['AMT_CREDIT'] / application_train_dk_features['AMT_INCOME_TOTAL']
 application_train_dk_features['ANNUITY_INCOME_PERCENT'] <- application_train_dk_features['AMT_ANNUITY'] / application_train_dk_features['AMT_INCOME_TOTAL']
 application_train_dk_features['CREDIT_TERM'] <- application_train_dk_features['AMT_ANNUITY'] / application_train_dk_features['AMT_CREDIT']
@@ -776,7 +778,7 @@ application_train_model_imputed<-data.frame(subset(application_train_model_imput
 
 
 ptm <- proc.time()
-model_glm <- glm(TARGET ~.,family=binomial(link='logit'),maxit=50,data=application_train_model_imputed)
+model_glm <- glm(TARGET ~.,family=binomial(link='logit'),maxit=50,data=application_train_model_imputed[,-c(1)])
 #model_glm <- glm(TARGET ~.,family=binomial(link='logit'),maxit=50,data=application_train_model_imputed[,c(2,8,9,10,11)])
 #model_glm <- glm(TARGET ~.,family=binomial(link='logit'),maxit=100,data=application_train_imputed[1:60000,])
 proc.time() - ptm
@@ -805,4 +807,35 @@ print(paste('Accuracy',1-misClasificError))
 #model <- glm(TARGET ~.,family=binomial(link='logit'),data=application_train_model_imputed)
 #predicted <- plogis(predict(model, (application_test)))
 
-cloudml_train("train.R")
+
+
+#data <- transform(
+#  data,
+#  NAME_INCOME_TYPE=as.integer(NAME_INCOME_TYPE),
+#  NAME_INCOME_TYPE=as.factor(NAME_INCOME_TYPE),
+#  NAME_INCOME_TYPE=as.factor(NAME_INCOME_TYPE),
+#  NAME_INCOME_TYPE=as.integer(NAME_INCOME_TYPE),
+#  NAME_INCOME_TYPE=as.integer(NAME_INCOME_TYPE),
+#  NAME_INCOME_TYPE=as.factor(NAME_INCOME_TYPE),
+#  NAME_INCOME_TYPE=as.factor(NAME_INCOME_TYPE),
+#  NAME_INCOME_TYPE=as.integer(NAME_INCOME_TYPE),
+#  NAME_INCOME_TYPE=as.factor(NAME_INCOME_TYPE),
+#  NAME_INCOME_TYPE=as.numeric(NAME_INCOME_TYPE),
+#  NAME_INCOME_TYPE=as.factor(NAME_INCOME_TYPE),
+#  NAME_INCOME_TYPE=as.factor(NAME_INCOME_TYPE),
+#  NAME_INCOME_TYPE=as.factor(NAME_INCOME_TYPE),
+#  NAME_INCOME_TYPE=as.factor(NAME_INCOME_TYPE)
+#)
+
+
+
+
+ptm <- proc.time()
+rf <- randomForest(
+  TARGET ~ .,
+  data=application_train_model_imputed[,-c(1)]
+)
+proc.time() - ptm
+
+
+application_train_model_imputed[apply(application_train_model_imputed, 1, function(X) all(is.nan(X))),]
