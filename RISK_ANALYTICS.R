@@ -771,7 +771,7 @@ application_test_model_imputed$AMT_ANNUITY<-rescale(as.numeric(application_test_
 #take random sample for training
 
 set.seed(12345)
-sample<-sample(unique(application_train_model_imputed$SK_ID_CURR) ,nrow(application_train_model_imputed)*0.2)
+sample<-sample(unique(application_train_model_imputed$SK_ID_CURR) ,nrow(application_train_model_imputed)*0.3)
 application_train_model_imputed<-data.frame(subset(application_train_model_imputed, SK_ID_CURR %in% sample#[,-c(4)][,c(6,73:96)]
 	)
 )
@@ -803,9 +803,23 @@ print(paste('Accuracy',1-misClasificError))
 
 
 
-#train model on tensorflow
-#model <- glm(TARGET ~.,family=binomial(link='logit'),data=application_train_model_imputed)
-#predicted <- plogis(predict(model, (application_test)))
+
+##############################################
+# 9.1 Random Forrest Implementation
+##############################################
+application_train_model<-application_train_dk_features
+application_test_model<-application_test_dk_features
+
+
+##transform to dataframe
+application_train_model<-as.data.frame(application_train_model)
+
+application_train_model[,c(1)]<-as.factor(application_train_model[,c(1)])
+application_train_model[,c(2)]<-as.factor(application_train_model[,c(2)])
+
+application_test_model<-as.data.frame(application_test_model)
+application_test_model[,c(1)]<-as.factor(application_test_model[,c(1)])
+application_test_model[,c(2)]<-as.factor(application_test_model[,c(2)])
 
 
 
@@ -828,14 +842,130 @@ print(paste('Accuracy',1-misClasificError))
 #)
 
 
+application_train_model_imputed<-application_train_model
 
+
+imputation_count=0
+for (f in (names(application_train_model_imputed))) {
+  
+  if (
+    
+    (is.numeric(application_train_model_imputed[[f]])=='TRUE')
+  )  {
+    
+    application_train_model_imputed[[f]]<-Hmisc::impute(application_train_model_imputed[[f]],mean)
+    
+    imputation_count=imputation_count +1
+  }
+}
+
+
+
+#scale data
+
+#adjustable scale range
+#rescale(s, to=c(0,10))
+#rescale(s, from=c(0, max(s)))
+
+#application_train_model_imputed<-rescale(application_train_model_imputed)
+rescaled_count=0
+for (f in (names(application_train_model_imputed))) {
+  if (
+    
+    (is.numeric(application_train_model_imputed[[f]])=='TRUE')
+    | class(application_train_model_imputed[[f]])=="impute"
+  )  {
+    application_train_model_imputed[[f]]<-rescale(application_train_model_imputed[[f]]) 
+    rescaled_count=rescaled_count +1
+  }
+}
+application_train_model_imputed$AMT_ANNUITY<-rescale(as.numeric(application_train_model_imputed$AMT_ANNUITY))
+application_train_model_imputed$AMT_ANNUITY<-rescale(as.numeric(application_train_model_imputed$AMT_GOODS_PRICE))
+
+
+
+
+application_test_model_imputed<-application_test_model
+
+
+imputation_test_count=0
+for (f in (names(application_test_model_imputed))) {
+  
+  if (
+    
+    (is.numeric(application_test_model_imputed[[f]])=='TRUE')
+  )  {
+    
+    application_test_model_imputed[[f]]<-Hmisc::impute(application_test_model_imputed[[f]],mean)
+    
+    imputation_test_count=imputation_count +1
+  }
+}
+
+rescaled_count=0
+for (f in (names(application_test_model_imputed))) {
+  if (
+    
+    (is.numeric(application_test_model_imputed[[f]])=='TRUE')
+    | class(application_test_model_imputed[[f]])=="impute"
+  )  {
+    application_test_model_imputed[[f]]<-rescale(application_test_model_imputed[[f]]) 
+    rescaled_count=rescaled_count +1
+  }
+}
+application_test_model_imputed$AMT_ANNUITY<-rescale(as.numeric(application_test_model_imputed$AMT_ANNUITY))
+application_test_model_imputed$AMT_ANNUITY<-rescale(as.numeric(application_test_model_imputed$AMT_GOODS_PRICE))
+
+
+
+str(application_train_model_imputed,list.len=ncol(application_train_model_imputed))
 
 ptm <- proc.time()
 rf <- randomForest(
   TARGET ~ .,
-  data=application_train_model_imputed[,-c(1)]
+  data=application_train_model_imputed[,-c(1,4)]
 )
 proc.time() - ptm
 
 
-application_train_model_imputed[apply(application_train_model_imputed, 1, function(X) all(is.nan(X))),]
+
+##proc.time() - ptm
+##   user  system elapsed 
+## 241.01    0.89  242.58 
+
+
+predTrain <- predict(rf, application_train_model_imputed, type = "class")
+# Checking classification accuracy
+table(predTrain, application_train_model_imputed$TARGET)
+
+
+
+
+
+#first run
+#Error in predict.randomForest(rf, application_test_model_imputed[, -c(1,  : 
+# New factor levels not present in the training data
+test<-application_test_model_imputed
+train<-application_train_model_imputed
+
+test$factor <- as.character(test$factor)
+test$isTest <- rep(1,nrow(test))
+train$isTest <- rep(0,nrow(train))
+fullSet <- rbind(test,train)
+fullSet$factor <- as.factor(fullSet$factor)
+test.new <- fullSet[fullSet$isTest==1,]
+train.new <- fullSet[fullSet$isTest==0,]
+
+
+
+
+# levels matching 
+application_test_model_imputed<-factor(application_test_model_imputed, levels=levels(application_train_model_imputed))
+
+
+predValid <- predict(rf, application_test_model_imputed[,-c(1,3,238)], type = "class")
+# Checking classification accuracy
+mean(predValid == application_test_model_imputed$TARGET)                    
+table(predValid,application_test_model_imputed$TARGET)
+
+
