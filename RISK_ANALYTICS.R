@@ -75,7 +75,7 @@ Packages <- c(
 ,"ElemStatLearn"
 ,"shiny","ggplot2","RColorBrewer","ggcorrplot","ggvis","graphics","GGally","rgl","vcd","leaflet"#,"ggpcorrplot" #Graphs and visualtion 
 ,"rmarkdown" ,"knitr" #documentation
-,"HSAUR","infer","randomForest","h2o","caret","gmm" ,"mltools","e1071","missForest","Mlr","car","mgcv","glmnet","lme4/nlme","DataScienceR"  #Modelling & Machine Learning
+,"HSAUR","infer","randomForest","h2o","caret","gmm" ,"mltools","e1071","missForest","mlr","car","mgcv","glmnet","lme4/nlme","DataScienceR"  #Modelling & Machine Learning
 ,"Quanteda.dictionaries","quanteda ","stringr","Text2Vec","SnowballC" #text mining
 ,"RCrawler" ,"htmlwidgets" # Web and Web Scraping  #Selenium,Scrapy,Beautifulsoup
 
@@ -176,7 +176,6 @@ for (f in (names(application_train))) {
 
         levels <- sort(unique(c(application_train[[f]], application_test[[f]])))
         application_train[[f]] <- as.integer(factor(application_train[[f]], levels = levels))
-        application_test[[f]] <- as.integer(factor(application_test[[f]], levels = levels))
         encoding_count=encoding_count +1
       }
 }
@@ -276,6 +275,21 @@ names(application_train) <- gsub("-", "_", names(application_train))
 
 
 
+encoding_count=0
+#label encoding  (just found out there are packages that have butit in label encoding function e.g. caret)
+for (f in (names(application_test))) {
+
+  if (
+       #(class(application_test[[f]]) == 'character') 
+      (is.character(application_test[[f]])=='TRUE') &
+      ((length(unique(levels(as.factor(application_test[[f]]))))<=2))=='TRUE'
+        )  {
+
+        levels <- sort(unique(c(application_train[[f]], application_test[[f]])))
+        application_test[[f]] <- as.integer(factor(application_test[[f]], levels = levels))
+        encoding_count=encoding_count +1
+      }
+}
 
 
 
@@ -334,6 +348,7 @@ names(application_train[!names(application_train) %in% names(application_test)])
 
 #algin training and testing data strcuture 
 application_test <- dplyr::bind_cols(application_test, head(application_train[!names(application_train) %in% names(application_test)],48744))
+application_test<-within(application_test, rm(TARGET))
 
 ##############################################
 # to do
@@ -384,6 +399,8 @@ application_test['DAYS_EMPLOYED_ANOM'] <- application_test["DAYS_EMPLOYED"] >=30
 application_test$DAYS_EMPLOYED[application_test$DAYS_EMPLOYED>=300000] <- NA
 
 
+application_test<-within(application_test, rm(DAYS_EMPLOYED_ANOM))
+application_train<-within(application_train, rm(DAYS_EMPLOYED_ANOM))
 #process
 #treat categorical encoding, missing values and the outliers
 r=cor(application_train$TARGET,application_train[sapply(application_train, function(x) is.numeric(x))], use="pairwise.complete.obs")
@@ -529,7 +546,7 @@ ggpairs(EXT_SOURCE_data)
 # 8.2. Domain Knowledge Features
 ##############################################
 
-poly_features <- application_train[,c('EXT_SOURCE_1', 'EXT_SOURCE_2', 'EXT_SOURCE_3', 'DAYS_BIRTH' #, 'TARGET')]
+poly_features <- application_train[,c('EXT_SOURCE_1', 'EXT_SOURCE_2', 'EXT_SOURCE_3', 'DAYS_BIRTH' , 'TARGET')]
 
 poly_features_test <- application_test[,c('EXT_SOURCE_1', 'EXT_SOURCE_2', 'EXT_SOURCE_3', 'DAYS_BIRTH')]
 
@@ -591,7 +608,7 @@ poly_features_test$DAYS_BIRTH   <- Hmisc::impute(poly_features_test$DAYS_BIRTH,m
 formula = as.formula(paste(' ~ .^3 + ',paste('poly(',colnames(poly_features),',2, raw=TRUE)[, 2]',collapse = ' + ')))
 #as.formula(paste(' ~ A:B + ',paste('poly(',colnames(data),',2, raw=TRUE)[, 2]',collapse = ' + ')))
 poly_features_2=data.frame(model.matrix(formula, data=as.data.frame(poly_features)))
-poly_features_2['TARGET'] = poly_target
+#poly_features_2['TARGET'] = poly_target
 
 formula_test = as.formula(paste(' ~ .^3 + ',paste('poly(',colnames(poly_features_test),',2, raw=TRUE)[, 2]',collapse = ' + ')))
 poly_features_test_2=data.frame(model.matrix(formula_test, data=as.data.frame(poly_features_test)))
@@ -608,11 +625,17 @@ ggcorrplot(sort(x[1,], decreasing = TRUE)[1:10])
 #Merge polynomial features back to training set
 poly_features_2['SK_ID_CURR'] = application_train['SK_ID_CURR']
 
-application_train_poly<- Reduce(function (a,b) merge(a,b,all.a=TRUE, by="SK_ID_CURR"), list(application_train,poly_features_2[,-c(1:6)]) )
+application_train_poly<- Reduce(function (a,b) merge(a,b,all.a=TRUE, by="SK_ID_CURR"), list(application_train,poly_features_2[,-c(1:5)]	) )
 #application_train_poly <- sqldf("SELECT * FROM application_train LEFT JOIN poly_features_2[,-20] USING(SK_ID_CURR)")
 
 poly_features_test_2['SK_ID_CURR'] = application_test['SK_ID_CURR']
 application_test_poly<- Reduce(function (a,b) merge(a,b,all.a=TRUE, by="SK_ID_CURR"), list(application_test,poly_features_test_2[,-c(1:5)]) )
+
+
+names(application_test_poly[!names(application_test_poly)%in% names(application_train_poly)])
+
+names(application_train_poly[!names(application_train_poly)%in% names(application_test_poly)])
+
 
 
 #algin training and testing data strcuture 
@@ -643,7 +666,7 @@ application_train_dk_features['CREDIT_INCOME_PERCENT'] <- application_train_dk_f
 application_train_dk_features['ANNUITY_INCOME_PERCENT'] <- application_train_dk_features['AMT_ANNUITY'] / application_train_dk_features['AMT_INCOME_TOTAL']
 application_train_dk_features['CREDIT_TERM'] <- application_train_dk_features['AMT_ANNUITY'] / application_train_dk_features['AMT_CREDIT']
 application_train_dk_features['DAYS_EMPLOYED_PERCENT'] <- application_train_dk_features['DAYS_EMPLOYED'] / application_train_dk_features['DAYS_BIRTH']
-application_train_dk_features['INCOME_PER_CHILDREN_PERCENT'] <-application_train_dk_features['AMT_INCOME_TOTAL']/application_train_dk_features['CNT_CHILDREN']
+#application_train_dk_features['INCOME_PER_CHILDREN_PERCENT'] <-application_train_dk_features['AMT_INCOME_TOTAL']/application_train_dk_features['CNT_CHILDREN']
 
 
 ##align the test data
@@ -651,8 +674,10 @@ application_test_dk_features ['CREDIT_INCOME_PERCENT'] <- application_test_dk_fe
 application_test_dk_features ['ANNUITY_INCOME_PERCENT'] <- application_test_dk_features ['AMT_ANNUITY'] / application_test_dk_features ['AMT_INCOME_TOTAL']
 application_test_dk_features ['CREDIT_TERM'] <- application_test_dk_features ['AMT_ANNUITY'] / application_test_dk_features ['AMT_CREDIT']
 application_test_dk_features ['DAYS_EMPLOYED_PERCENT'] <- application_test_dk_features ['DAYS_EMPLOYED'] / application_test_dk_features ['DAYS_BIRTH']
-application_test_dk_features['INCOME_PER_CHILDREN_PERCENT'] <-application_test_dk_features['AMT_INCOME_TOTAL']/application_test_dk_features['CNT_CHILDREN']
+#application_test_dk_features['INCOME_PER_CHILDREN_PERCENT'] <-application_test_dk_features['AMT_INCOME_TOTAL']/application_test_dk_features['CNT_CHILDREN']
 
+
+x<-application_train_model_rf_fac[application_train_model_rf_fac$SK_ID_CURR==100023,]
 ##############################################
 # 9. Model Implementation
 # 9.1 Logistic Regression Implementation (Baseline)
@@ -807,19 +832,44 @@ print(paste('Accuracy',1-misClasificError))
 ##############################################
 # 9.1 Random Forrest Implementation
 ##############################################
-application_train_model<-application_train_dk_features
-application_test_model<-application_test_dk_features
+application_train_model_rf<-application_train_dk_features
+application_test_model_rf<-application_test_dk_features
+application_test_model_rf$SK_ID_CURR<-as.factor(application_test_model_rf$SK_ID_CURR)
+
+set.seed(12345)
+sample<-sample(unique(application_train$SK_ID_CURR) ,nrow(application_train)*0.5)
+application_train_model_rf<-data.frame(subset(application_train_model_rf, SK_ID_CURR %in% sample#[,-c(4)][,c(6,73:96)]
+	)
+)
+
+
+
+
+##first run
+##Error in predict.randomForest(rf, application_test_model_rf[, -c(1,  : 
+## New factor levels not present in the training data
+##application_test_model_rf<-factor(application_test_model_rf, levels=levels(application_train_model_rf))
+#test<-application_test_model_rf
+#train<-application_train_model_rf
+#test$factor <- as.character(test$factor)
+#test$isTest <- rep(1,nrow(test))
+#train$isTest <- rep(0,nrow(train))
+#fullSet <- rbind(test,train)
+#fullSet$factor <- as.factor(fullSet$factor)
+#test.new <- fullSet[fullSet$isTest==1,]
+#train.new <- fullSet[fullSet$isTest==0,]
+
 
 
 ##transform to dataframe
-application_train_model<-as.data.frame(application_train_model)
+application_train_model_rf<-as.data.frame(application_train_model_rf)
 
-application_train_model[,c(1)]<-as.factor(application_train_model[,c(1)])
-application_train_model[,c(2)]<-as.factor(application_train_model[,c(2)])
+application_train_model_rf[,c(1)]<-as.factor(application_train_model_rf[,c(1)])
+application_train_model_rf[,c(2)]<-as.factor(application_train_model_rf[,c(2)])
 
-application_test_model<-as.data.frame(application_test_model)
-application_test_model[,c(1)]<-as.factor(application_test_model[,c(1)])
-application_test_model[,c(2)]<-as.factor(application_test_model[,c(2)])
+application_test_model_rf<-as.data.frame(application_test_model_rf)
+application_test_model_rf[,c(1)]<-as.factor(application_test_model_rf[,c(1)])
+#application_test_model_rf[,c(2)]<-as.factor(application_test_model_rf[,c(2)])
 
 
 
@@ -842,18 +892,17 @@ application_test_model[,c(2)]<-as.factor(application_test_model[,c(2)])
 #)
 
 
-application_train_model_imputed<-application_train_model
 
 
 imputation_count=0
-for (f in (names(application_train_model_imputed))) {
+for (f in (names(application_train_model_rf))) {
   
   if (
     
-    (is.numeric(application_train_model_imputed[[f]])=='TRUE')
+    (is.numeric(application_train_model_rf[[f]])=='TRUE')
   )  {
     
-    application_train_model_imputed[[f]]<-Hmisc::impute(application_train_model_imputed[[f]],mean)
+    application_train_model_rf[[f]]<-Hmisc::impute(application_train_model_rf[[f]],mean)
     
     imputation_count=imputation_count +1
   }
@@ -867,105 +916,108 @@ for (f in (names(application_train_model_imputed))) {
 #rescale(s, to=c(0,10))
 #rescale(s, from=c(0, max(s)))
 
-#application_train_model_imputed<-rescale(application_train_model_imputed)
+#application_train_model_rf<-rescale(application_train_model_rf)
 rescaled_count=0
-for (f in (names(application_train_model_imputed))) {
+for (f in (names(application_train_model_rf))) {
   if (
     
-    (is.numeric(application_train_model_imputed[[f]])=='TRUE')
-    | class(application_train_model_imputed[[f]])=="impute"
+    (is.numeric(application_train_model_rf[[f]])=='TRUE')
+    | class(application_train_model_rf[[f]])=="impute"
   )  {
-    application_train_model_imputed[[f]]<-rescale(application_train_model_imputed[[f]]) 
+    application_train_model_rf[[f]]<-rescale(application_train_model_rf[[f]]) 
     rescaled_count=rescaled_count +1
   }
 }
-application_train_model_imputed$AMT_ANNUITY<-rescale(as.numeric(application_train_model_imputed$AMT_ANNUITY))
-application_train_model_imputed$AMT_ANNUITY<-rescale(as.numeric(application_train_model_imputed$AMT_GOODS_PRICE))
+application_train_model_rf$AMT_ANNUITY<-rescale(as.numeric(application_train_model_rf$AMT_ANNUITY))
+application_train_model_rf$AMT_ANNUITY<-rescale(as.numeric(application_train_model_rf$AMT_GOODS_PRICE))
 
 
 
 
-application_test_model_imputed<-application_test_model
+
 
 
 imputation_test_count=0
-for (f in (names(application_test_model_imputed))) {
+for (f in (names(application_test_model_rf))) {
   
   if (
     
-    (is.numeric(application_test_model_imputed[[f]])=='TRUE')
+    (is.numeric(application_test_model_rf[[f]])=='TRUE')
+    &
+    (is.na(application_test_model_rf[[f]])=='TRUE')
+### here to do fix
   )  {
     
-    application_test_model_imputed[[f]]<-Hmisc::impute(application_test_model_imputed[[f]],mean)
+    application_test_model_rf[[f]]<-Hmisc::impute(application_test_model_rf[[f]],mean)
     
     imputation_test_count=imputation_count +1
   }
 }
 
+
+
 rescaled_count=0
-for (f in (names(application_test_model_imputed))) {
+for (f in (names(application_test_model_rf))) {
   if (
     
-    (is.numeric(application_test_model_imputed[[f]])=='TRUE')
-    | class(application_test_model_imputed[[f]])=="impute"
+    (is.numeric(application_test_model_rf[[f]])=='TRUE')
+    | class(application_test_model_rf[[f]])=="impute"
   )  {
-    application_test_model_imputed[[f]]<-rescale(application_test_model_imputed[[f]]) 
+    application_test_model_rf[[f]]<-rescale(application_test_model_rf[[f]]) 
     rescaled_count=rescaled_count +1
   }
 }
-application_test_model_imputed$AMT_ANNUITY<-rescale(as.numeric(application_test_model_imputed$AMT_ANNUITY))
-application_test_model_imputed$AMT_ANNUITY<-rescale(as.numeric(application_test_model_imputed$AMT_GOODS_PRICE))
+application_test_model_rf$AMT_ANNUITY<-rescale(as.numeric(application_test_model_rf$AMT_ANNUITY))
+application_test_model_rf$AMT_ANNUITY<-rescale(as.numeric(application_test_model_rf$AMT_GOODS_PRICE))
 
 
 
-str(application_train_model_imputed,list.len=ncol(application_train_model_imputed))
+str(application_train_model_rf,list.len=ncol(application_train_model_rf[,-c(1,4)]))
+#application_train_model_rf_fac=application_train_model_rf %>% dplyr::mutate_if(is.character, as.factor)
+application_train_model_rf[sapply(application_train_model_rf, is.infinite)] <- 0
+
+
+
+
 
 ptm <- proc.time()
 rf <- randomForest(
   TARGET ~ .,
-  data=application_train_model_imputed[,-c(1,4)]
+  data=application_train_model_rf[,-c(1,4)]
 )
 proc.time() - ptm
 
 
+# proc.time() - ptm
+#   user  system elapsed 
+#4301.37    5.98 4313.30 
 
-##proc.time() - ptm
-##   user  system elapsed 
-## 241.01    0.89  242.58 
 
 
-predTrain <- predict(rf, application_train_model_imputed, type = "class")
+predTrain <- predict(rf, application_train_model_rf, type = "class")
 # Checking classification accuracy
-table(predTrain, application_train_model_imputed$TARGET)
+table(predTrain, application_train_model_rf$TARGET)
+
+
+#predTrain     0     1
+#        0 84778     0
+#        1     0  7475
 
 
 
 
-
-#first run
-#Error in predict.randomForest(rf, application_test_model_imputed[, -c(1,  : 
-# New factor levels not present in the training data
-test<-application_test_model_imputed
-train<-application_train_model_imputed
-
-test$factor <- as.character(test$factor)
-test$isTest <- rep(1,nrow(test))
-train$isTest <- rep(0,nrow(train))
-fullSet <- rbind(test,train)
-fullSet$factor <- as.factor(fullSet$factor)
-test.new <- fullSet[fullSet$isTest==1,]
-train.new <- fullSet[fullSet$isTest==0,]
-
-
-
-
+str(application_test_model_rf,list.len=ncol(application_test_model_rf[,-c(1,4)]))
 # levels matching 
-application_test_model_imputed<-factor(application_test_model_imputed, levels=levels(application_train_model_imputed))
+#application_test_model_rf<-factor(application_test_model_rf, levels=levels(application_train_model_rf))
 
 
-predValid <- predict(rf, application_test_model_imputed[,-c(1,3,238)], type = "class")
+
+#application_test_model_rf[["NAME_CONTRACT_TYPE"]] <- as.integer(factor(application_test_model_rf[["NAME_CONTRACT_TYPE"]], levels = levels))
+
+
+predValid <- predict(rf, application_test_model_rf[,-c(1,3)], type = "class")
 # Checking classification accuracy
-mean(predValid == application_test_model_imputed$TARGET)                    
-table(predValid,application_test_model_imputed$TARGET)
+mean(predValid == application_test_model_rf$TARGET)                    
+table(predValid,application_test_model_rf$TARGET)
 
 
