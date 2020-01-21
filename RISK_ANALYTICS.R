@@ -943,9 +943,7 @@ for (f in (names(application_test_model_rf))) {
   if (
     
     (is.numeric(application_test_model_rf[[f]])=='TRUE')
-    &
-    (is.na(application_test_model_rf[[f]])=='TRUE')
-### here to do fix
+
   )  {
     
     application_test_model_rf[[f]]<-Hmisc::impute(application_test_model_rf[[f]],mean)
@@ -1005,7 +1003,6 @@ table(predTrain, application_train_model_rf$TARGET)
 
 
 
-
 str(application_test_model_rf,list.len=ncol(application_test_model_rf[,-c(1,4)]))
 # levels matching 
 #application_test_model_rf<-factor(application_test_model_rf, levels=levels(application_train_model_rf))
@@ -1014,10 +1011,8 @@ str(application_test_model_rf,list.len=ncol(application_test_model_rf[,-c(1,4)])
 
 #application_test_model_rf[["NAME_CONTRACT_TYPE"]] <- as.integer(factor(application_test_model_rf[["NAME_CONTRACT_TYPE"]], levels = levels))
 
+application_test_model_rf[sapply(application_test_model_rf, is.infinite)] <- 0
+
 
 predValid <- predict(rf, application_test_model_rf[,-c(1,3)], type = "class")
-# Checking classification accuracy
-mean(predValid == application_test_model_rf$TARGET)                    
-table(predValid,application_test_model_rf$TARGET)
-
-
+table(predValid)
