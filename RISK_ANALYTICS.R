@@ -842,7 +842,13 @@ application_train_model_rf<-data.frame(subset(application_train_model_rf, SK_ID_
 	)
 )
 
-
+`%notin%` <- Negate(`%in%`)
+validationset<-data.frame(subset(application_train_dk_features, SK_ID_CURR %notin% (unique(application_train_model_rf$SK_ID_CURR))))
+sample<-sample(unique(validationset$SK_ID_CURR) ,nrow(validationset)*0.5)
+validationset_2<-data.frame(subset(validationset, SK_ID_CURR %in% sample#[,-c(4)][,c(6,73:96)]
+	)
+)
+validationset_2$SK_ID_CURR<-as.factor(validationset_2$SK_ID_CURR)
 
 
 ##first run
@@ -893,7 +899,7 @@ application_test_model_rf[,c(1)]<-as.factor(application_test_model_rf[,c(1)])
 
 
 
-
+#treatment to training set
 imputation_count=0
 for (f in (names(application_train_model_rf))) {
   
@@ -935,8 +941,42 @@ application_train_model_rf$AMT_ANNUITY<-rescale(as.numeric(application_train_mod
 
 
 
+#treatment to validation set
+imputation_validation_count=0
+for (f in (names(validationset_2))) {
+  
+  if (
+    
+    (is.numeric(validationset_2[[f]])=='TRUE')
+  )  {
+    
+    validationset_2[[f]]<-Hmisc::impute(validationset_2[[f]],mean)
+    
+    imputation_validation_count=imputation_count +1
+  }
+}
 
 
+rescaled_validation_count=0
+for (f in (names(validationset_2))) {
+  if (
+    
+    (is.numeric(validationset_2[[f]])=='TRUE')
+    | class(validationset_2[[f]])=="impute"
+  )  {
+    validationset_2[[f]]<-rescale(validationset_2[[f]]) 
+    rescaled_validation_count=rescaled_count +1
+  }
+}
+validationset_2$AMT_ANNUITY<-rescale(as.numeric(validationset_2$AMT_ANNUITY))
+validationset_2$AMT_ANNUITY<-rescale(as.numeric(validationset_2$AMT_GOODS_PRICE))
+
+
+
+
+
+
+#treatment to test set
 imputation_test_count=0
 for (f in (names(application_test_model_rf))) {
   
@@ -977,7 +1017,6 @@ application_train_model_rf[sapply(application_train_model_rf, is.infinite)] <- 0
 
 
 
-
 ptm <- proc.time()
 rf <- randomForest(
   TARGET ~ .,
@@ -995,11 +1034,23 @@ proc.time() - ptm
 predTrain <- predict(rf, application_train_model_rf, type = "class")
 # Checking classification accuracy
 table(predTrain, application_train_model_rf$TARGET)
-
-
 #predTrain     0     1
 #        0 84778     0
 #        1     0  7475
+
+importance(rf)        
+varImpPlot(rf) 
+
+
+
+
+validationset_2[sapply(validationset_2, is.infinite)] <- 0
+
+predValid <- predict(rf, validationset_2, type = "class")
+mean(predValid == validationset_2$TARGET)                    
+table(predValid,validationset_2$TARGET)
+
+
 
 
 
@@ -1014,5 +1065,5 @@ str(application_test_model_rf,list.len=ncol(application_test_model_rf[,-c(1,4)])
 application_test_model_rf[sapply(application_test_model_rf, is.infinite)] <- 0
 
 
-predValid <- predict(rf, application_test_model_rf[,-c(1,3)], type = "class")
-table(predValid)
+predtest <- predict(rf, application_test_model_rf[,-c(1,3)], type = "class")
+table(predtest)
