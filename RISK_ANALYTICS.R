@@ -1225,7 +1225,3 @@ application_test_model_rf[sapply(application_test_model_rf, is.infinite)] <- 0
 
 predtest <- predict(rf, application_test_model_rf[,-c(1,3)], type = "class")
 table(predtest)
-
-
-
-
