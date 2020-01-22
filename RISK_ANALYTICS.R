@@ -1053,21 +1053,6 @@ table(predValid,validationset_2$TARGET)
 
 
 
-str(application_test_model_rf,list.len=ncol(application_test_model_rf[,-c(1,4)]))
-# levels matching 
-#application_test_model_rf<-factor(application_test_model_rf, levels=levels(application_train_model_rf))
-
-
-
-#application_test_model_rf[["NAME_CONTRACT_TYPE"]] <- as.integer(factor(application_test_model_rf[["NAME_CONTRACT_TYPE"]], levels = levels))
-
-application_test_model_rf[sapply(application_test_model_rf, is.infinite)] <- 0
-
-
-predtest <- predict(rf, application_test_model_rf[,-c(1,3)], type = "class")
-table(predtest)
-
-
 
 
 
@@ -1212,6 +1197,9 @@ table(predValid,validationset_2$TARGET)
 # 9.3 Random Forrest Implementation
 # Apply Model to the test dataset
 ##############################################
+
+
+
 str(application_test_model_rf,list.len=ncol(application_test_model_rf[,-c(1,4)]))
 # levels matching 
 #application_test_model_rf<-factor(application_test_model_rf, levels=levels(application_train_model_rf))
@@ -1223,5 +1211,9 @@ str(application_test_model_rf,list.len=ncol(application_test_model_rf[,-c(1,4)])
 application_test_model_rf[sapply(application_test_model_rf, is.infinite)] <- 0
 
 
-predtest <- predict(rf, application_test_model_rf[,-c(1,3)], type = "class")
+predtest <- predict(rf_2, application_test_model_rf[,-c(1,3)], type = "class")
 table(predtest)
+
+
+
+
