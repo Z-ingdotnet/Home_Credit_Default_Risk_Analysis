@@ -1043,7 +1043,6 @@ varImpPlot(rf)
 
 
 
-
 validationset_2[sapply(validationset_2, is.infinite)] <- 0
 
 predValid <- predict(rf, validationset_2, type = "class")
@@ -1067,3 +1066,166 @@ application_test_model_rf[sapply(application_test_model_rf, is.infinite)] <- 0
 
 predtest <- predict(rf, application_test_model_rf[,-c(1,3)], type = "class")
 table(predtest)
+
+
+
+
+
+##############################################
+# 9.2 Random Forrest Implementation v2
+# remove variables with low MeanDecreaseGini index
+##############################################
+application_train_model_rf_rd<-application_train_model_rf %>% dplyr::select(-one_of(c("FLAG_MOBIL"
+,"FLAG_EMP_PHONE"
+,"FLAG_WORK_PHONE"
+,"FLAG_CONT_MOBILE"
+,"FLAG_EMAIL"
+,"REG_REGION_NOT_LIVE_REGION"
+,"REG_REGION_NOT_WORK_REGION"
+,"NONLIVINGAPARTMENTS_AVG"
+,"NONLIVINGAPARTMENTS_MODE"
+,"EMERGENCYSTATE_MODE"
+,"FLAG_DOCUMENT_2"
+,"FLAG_DOCUMENT_4"
+,"FLAG_DOCUMENT_7"
+,"FLAG_DOCUMENT_9"
+,"FLAG_DOCUMENT_10"
+,"FLAG_DOCUMENT_11"
+,"FLAG_DOCUMENT_12"
+,"FLAG_DOCUMENT_13"
+,"FLAG_DOCUMENT_14"
+,"FLAG_DOCUMENT_15"
+,"FLAG_DOCUMENT_16"
+,"FLAG_DOCUMENT_17"
+,"FLAG_DOCUMENT_18"
+,"FLAG_DOCUMENT_19"
+,"FLAG_DOCUMENT_20"
+,"FLAG_DOCUMENT_21"
+,"NAME_TYPE_SUITE_Group_of_people"
+,"NAME_INCOME_TYPE_Businessman"
+,"NAME_INCOME_TYPE_Maternity_leave"
+,"NAME_INCOME_TYPE_Student"
+,"NAME_INCOME_TYPE_Unemployed"
+,"NAME_EDUCATION_TYPE_Academic_degree"
+,"NAME_FAMILY_STATUS_Unknown"
+,"NAME_HOUSING_TYPE_Co_op_apartment"
+,"ORGANIZATION_TYPE_Advertising"
+,"ORGANIZATION_TYPE_Bank"
+,"ORGANIZATION_TYPE_Cleaning"
+,"ORGANIZATION_TYPE_Culture"
+,"ORGANIZATION_TYPE_Electricity"
+,"ORGANIZATION_TYPE_Emergency"
+,"ORGANIZATION_TYPE_Hotel"
+,"ORGANIZATION_TYPE_Housing"
+,"ORGANIZATION_TYPE_Industry__type_1"
+,"ORGANIZATION_TYPE_Industry__type_10"
+,"ORGANIZATION_TYPE_Industry__type_11"
+,"ORGANIZATION_TYPE_Industry__type_12"
+,"ORGANIZATION_TYPE_Industry__type_13"
+,"ORGANIZATION_TYPE_Industry__type_2"
+,"ORGANIZATION_TYPE_Industry__type_3"
+,"ORGANIZATION_TYPE_Industry__type_4"
+,"ORGANIZATION_TYPE_Industry__type_5"
+,"ORGANIZATION_TYPE_Industry__type_6"
+,"ORGANIZATION_TYPE_Industry__type_7"
+,"ORGANIZATION_TYPE_Industry__type_8"
+,"ORGANIZATION_TYPE_Industry__type_9"
+,"ORGANIZATION_TYPE_Insurance"
+,"ORGANIZATION_TYPE_Kindergarten"
+,"ORGANIZATION_TYPE_Legal_Services"
+,"ORGANIZATION_TYPE_Medicine"
+,"ORGANIZATION_TYPE_Military"
+,"ORGANIZATION_TYPE_Mobile"
+,"ORGANIZATION_TYPE_Other"
+,"ORGANIZATION_TYPE_Police"
+,"ORGANIZATION_TYPE_Postal"
+,"ORGANIZATION_TYPE_Realtor"
+,"ORGANIZATION_TYPE_Religion"
+,"ORGANIZATION_TYPE_Restaurant"
+,"ORGANIZATION_TYPE_School"
+,"ORGANIZATION_TYPE_Security"
+,"ORGANIZATION_TYPE_Security_Ministries"
+,"ORGANIZATION_TYPE_Services"
+,"ORGANIZATION_TYPE_Telecom"
+,"ORGANIZATION_TYPE_Trade__type_1"
+,"ORGANIZATION_TYPE_Trade__type_2"
+,"ORGANIZATION_TYPE_Trade__type_3"
+,"ORGANIZATION_TYPE_Trade__type_4"
+,"ORGANIZATION_TYPE_Trade__type_5"
+,"ORGANIZATION_TYPE_Trade__type_6"
+,"ORGANIZATION_TYPE_Transport__type_1"
+,"ORGANIZATION_TYPE_Transport__type_2"
+,"ORGANIZATION_TYPE_Transport__type_3"
+,"ORGANIZATION_TYPE_Transport__type_4"
+,"ORGANIZATION_TYPE_University"
+,"ORGANIZATION_TYPE_XNA"
+,"FONDKAPREMONT_MODE_not_specified"
+,"FONDKAPREMONT_MODE_org_spec_account"
+,"FONDKAPREMONT_MODE_reg_oper_account"
+,"FONDKAPREMONT_MODE_reg_oper_spec_account"
+,"HOUSETYPE_MODE_block_of_flats"
+,"HOUSETYPE_MODE_specific_housing"
+,"HOUSETYPE_MODE_terraced_house"
+,"WALLSMATERIAL_MODE_Block"
+,"WALLSMATERIAL_MODE_Mixed"
+,"WALLSMATERIAL_MODE_Monolithic"
+,"WALLSMATERIAL_MODE_Others"
+,"WALLSMATERIAL_MODE_Panel"
+,"WALLSMATERIAL_MODE_Stone__brick"
+,"WALLSMATERIAL_MODE_Wooden"
+)))
+
+
+ptm <- proc.time()
+rf_2 <- randomForest(
+  TARGET ~ .,
+  data=application_train_model_rf_rd[,-c(1,4)]
+)
+proc.time() - ptm
+
+#> proc.time() - ptm
+#   user  system elapsed 
+#2537.98   10.04 2551.63
+
+
+
+
+predTrain <- predict(rf_2, application_train_model_rf_rd, type = "class")
+# Checking classification accuracy
+table(predTrain, application_train_model_rf_rd$TARGET)
+#predTrain      0      1
+#        0 141356      0
+#        1      0  12399
+
+
+
+validationset_2[sapply(validationset_2, is.infinite)] <- 0
+
+predValid <- predict(rf_2, validationset_2, type = "class")
+mean(predValid == validationset_2$TARGET)                    
+table(predValid,validationset_2$TARGET)
+
+
+
+
+##############################################
+# 9.3 Random Forrest Implementation
+# Apply Model to the test dataset
+##############################################
+str(application_test_model_rf,list.len=ncol(application_test_model_rf[,-c(1,4)]))
+# levels matching 
+#application_test_model_rf<-factor(application_test_model_rf, levels=levels(application_train_model_rf))
+
+
+
+#application_test_model_rf[["NAME_CONTRACT_TYPE"]] <- as.integer(factor(application_test_model_rf[["NAME_CONTRACT_TYPE"]], levels = levels))
+
+application_test_model_rf[sapply(application_test_model_rf, is.infinite)] <- 0
+
+
+predtest <- predict(rf, application_test_model_rf[,-c(1,3)], type = "class")
+table(predtest)
+
+
+
+
